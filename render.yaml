@@ -39,9 +39,12 @@ projects:
             region: oregon
             healthCheckPath: /health
             autoDeployTrigger: commit
-            buildCommand: npm ci && npm run build -w @system/shared && npm run build -w @system/server
-            # Schema changes go live before the new code serves traffic.
-            preDeployCommand: npm run migrate -w @system/server
+            # --include=dev is required: NODE_ENV=production would otherwise skip
+            # typescript, which the build uses. Runtime migrate uses compiled JS.
+            buildCommand: npm ci --include=dev && npm run build -w @system/shared && npm run build -w @system/server
+            # Schema changes go live before the new process serves traffic.
+            # Boot also migrates; this keeps a failed migration from starting.
+            preDeployCommand: node apps/server/dist/db/migrate-cli.js
             startCommand: npm run start -w @system/server
             buildFilter:
               paths:
@@ -53,6 +56,8 @@ projects:
             envVars:
               - key: NODE_ENV
                 value: production
+              - key: NODE_VERSION
+                value: "22"
               - key: HOST
                 value: "0.0.0.0"
               - key: DATABASE_URL

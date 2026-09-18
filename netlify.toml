@@ -9,3 +9,7 @@
 
 # NEXT_PUBLIC_API_URL is set in the Netlify UI / CLI (the Render API hostname).
 # Do not hardcode it here — it is inlined at build time.
+
+# The app lives in apps/web; this plugin maps App Router output onto Netlify.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
