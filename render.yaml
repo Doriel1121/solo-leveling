@@ -4,9 +4,9 @@
 # is on Netlify; set CORS_ORIGIN to that origin after the first Netlify deploy.
 # GEMINI_API_KEY and COHERE_API_KEY are filled in the Render Dashboard.
 #
-# Note on plans: the API holds SSE connections open and runs speculative
-# generation between turns, so it must not spin down. Free instances sleep after
-# 15 minutes of inactivity and would drop live runs and warm caches.
+# Hobby / free tier: the API sleeps after 15 minutes idle (cold start ~1 min),
+# free Postgres expires after 30 days, and free Key Value has no persistence
+# (session keys vanish if the instance restarts).
 
 previews:
   generation: manual
@@ -18,24 +18,25 @@ projects:
       - name: production
         databases:
           - name: system-db
-            plan: basic-256mb
+            plan: free
             region: oregon
             postgresMajorVersion: "17"
 
         services:
           - type: keyvalue
             name: system-cache
-            plan: starter
+            plan: free
             region: oregon
-            # Every session key carries a TTL, so under pressure the right thing
-            # to drop is whatever expires soonest rather than rejecting writes.
+            # Free Key Value does not persist to disk; volatile-ttl still drops
+            # expired session keys first if memory pressure hits.
             maxmemoryPolicy: volatile-ttl
+            persistenceMode: off
             ipAllowList: []
 
           - type: web
             name: system-api
             runtime: node
-            plan: starter
+            plan: free
             region: oregon
             healthCheckPath: /health
             autoDeployTrigger: commit
