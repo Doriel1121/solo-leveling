@@ -1,0 +1,22 @@
+---
+description: Solo Leveling narrative bible for scenarios, System copy, choices, and lore. Full research is in docs/solo-leveling-design-brief.md.
+globs: apps/server/src/engine/**/*.ts,apps/server/src/db/seed.ts,apps/web/components/**/*.tsx,apps/web/app/**/*.tsx
+alwaysApply: true
+---
+
+# Solo Leveling narrative guidance
+
+Before writing or changing scenarios, choices, System lines, lore chunks, or narrator voice, read `docs/solo-leveling-design-brief.md`. That file is the research hand-off from the research agent. Follow it.
+
+## Non-negotiables
+
+- All in-game prose stays original. Use world systems and emotional pressure from Solo Leveling; do not paste plot, names, or dialogue from the novel/manhwa/anime.
+- The System is terse, bracketed, and emotionless. Other hunters cannot see its windows and must never refer to the player's "level."
+- Rank is mana at awakening, almost never skill. Only the Player levels. Red gates seal. Uncleared gates break.
+- Choices should run on these axes: solo vs party, obey vs test the System, hide power vs leak it, mercy vs extraction, stylish-deadly vs boring-safe, family/debt vs the raid.
+- Power spikes cost warmth. Family and loyalty beats buy it back. Named NPCs are not introduced solely to die in the next panel.
+- Fans pay for glow-up, System dopamine, solo competence, aura without speeches, rule-bound death games, and a shadow crew with personality. They punish predictable wins, one-tapped side characters, and another generic corridor.
+
+## Highest-value missing content
+
+Daily quest + Penalty Zone, hunter classes, mana-meter politics, a commandment/temple node, party betrayal, Job Change survive-timer, extraction failure, a family reason to keep running.

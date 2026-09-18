@@ -1,0 +1,24 @@
+---
+description: Player UX/visual experience bible. Read docs/player-experience-spec.md before changing the web client, HUD, panel layout, art, motion, choice feedback, start/end screens, or the panel/SSE payload those surfaces consume.
+globs: apps/web/**/*.{ts,tsx,css},packages/shared/src/panels.ts,packages/shared/src/events.ts,apps/server/src/engine/llm/prompts.ts,apps/server/src/db/seed.ts
+alwaysApply: false
+---
+
+# Player experience guidance
+
+Before changing look, feel, layout, motion, images, HUD, choices, start/end screens, or panel payloads, read `docs/player-experience-spec.md`. That file is the design hand-off. Follow it.
+
+Narrative voice, lore, and choice *axes* stay in `docs/solo-leveling-design-brief.md`. If the problem is "too much text / no pictures / no juice," fix presentation — do not pad the story.
+
+## Non-negotiables
+
+- Picture first, System second, prose last. Caption ≤ 140 characters. Body 20–45 words default, 80 hard max.
+- The System stays terse, bracketed, emoji-less. Chrome is friendly; the dungeon stays lethal.
+- No unique AI image on the turn path. Local stills + CSS biomes + FX. No spinners.
+- Every tap plays FX before the next paragraph finishes typing. Risk is visible without hover. Locked rows use a System glyph, not 🔒.
+- Diagnostics off by default. Human location labels. Glow-up is a layout property (early panels small/busy, late panels wide/quiet).
+- Respect `prefers-reduced-motion`. Do not add a second animation library. Do not edit `node_modules`.
+
+## Build order
+
+Phase A in the spec (CSS biomes, shorter copy, choice FX, start-screen rewrite) before painted stills or the epilogue image worker.

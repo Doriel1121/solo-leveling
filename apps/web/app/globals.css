@@ -1,0 +1,1137 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #04060d;
+  --color-void-soft: #0a1020;
+  --color-system: #4cc9ff;
+  --color-system-deep: #0b3a5c;
+  --color-danger: #ff4d6d;
+  --color-warn: #ffb020;
+  --color-anomaly: #ff2d55;
+  --color-shadow: #6b5cff;
+  --color-family: #f3e6c8;
+  --color-xp: #7dffa8;
+
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-system: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo,
+    Consolas, monospace;
+
+  /* The System is a terminal from another world, not iOS. Corners stay sharp. */
+  --ease-system: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-snap: 180ms;
+  --duration-panel: 420ms;
+  --duration-levelup: 800ms;
+  --panel-radius: 2px;
+  --choice-min-height: 52px;
+}
+
+html,
+body {
+  background: var(--color-void);
+  color: #e8eefc;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+body {
+  /* Faint vertical gradient so the endless scroll reads as depth. */
+  background-image: radial-gradient(
+      120% 60% at 50% 0%,
+      rgba(76, 201, 255, 0.09),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #04060d 0%, #060a14 50%, #04060d 100%);
+  background-attachment: fixed;
+}
+
+/* ---------------------------------------------------------------- System UI */
+
+/* The System window: semi-transparent blue glass with a hard neon edge. */
+.system-window {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(76, 201, 255, 0.55);
+  background: linear-gradient(
+    180deg,
+    rgba(11, 58, 92, 0.55) 0%,
+    rgba(8, 24, 44, 0.45) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(76, 201, 255, 0.12),
+    0 0 18px rgba(76, 201, 255, 0.22),
+    inset 0 0 22px rgba(76, 201, 255, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+.system-window--anomaly {
+  border-color: rgba(255, 45, 85, 0.6);
+  background: linear-gradient(
+    180deg,
+    rgba(92, 11, 33, 0.55) 0%,
+    rgba(44, 8, 18, 0.45) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 45, 85, 0.14),
+    0 0 20px rgba(255, 45, 85, 0.26),
+    inset 0 0 22px rgba(255, 45, 85, 0.08);
+}
+
+.system-corner::before,
+.system-corner::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: inherit;
+}
+
+/* One-frame scanline that sweeps a window as it snaps open. */
+.system-scan::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(76, 201, 255, 0.9),
+    transparent
+  );
+  animation: system-scan var(--duration-snap) var(--ease-system) 1;
+}
+
+@keyframes system-scan {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(var(--scan-distance, 90px));
+    opacity: 0;
+  }
+}
+
+/* Resolve beat: the System stays on the current still while the next room
+   assembles. A dimmer, not a spinner — the window is the content. */
+.resolve-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 6, 13, 0.72) 0%,
+    rgba(4, 6, 13, 0.48) 45%,
+    rgba(4, 6, 13, 0.7) 100%
+  );
+}
+
+.resolve-hold .system-window {
+  animation: resolve-breathe 2.2s var(--ease-system) infinite;
+}
+
+@keyframes resolve-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(76, 201, 255, 0.12),
+      0 0 18px rgba(76, 201, 255, 0.22),
+      inset 0 0 22px rgba(76, 201, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(76, 201, 255, 0.28),
+      0 0 26px rgba(76, 201, 255, 0.38),
+      inset 0 0 26px rgba(76, 201, 255, 0.14);
+  }
+}
+
+.neon-text {
+  text-shadow: 0 0 8px rgba(76, 201, 255, 0.65);
+}
+
+/* Captions sit on artwork, so they get even line lengths and their own
+   legibility instead of relying on the scrim alone. */
+.panel-caption {
+  text-wrap: balance;
+  text-shadow: 0 1px 12px rgba(4, 6, 13, 0.95), 0 0 3px rgba(4, 6, 13, 0.8);
+}
+
+/* Four-corner brackets with a slash: the System's lock glyph. Never an emoji. */
+.lock-glyph {
+  position: relative;
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 1px solid currentColor;
+  clip-path: polygon(
+    0 0,
+    38% 0,
+    38% 8%,
+    8% 8%,
+    8% 38%,
+    0 38%,
+    0 62%,
+    8% 62%,
+    8% 92%,
+    38% 92%,
+    38% 100%,
+    0 100%,
+    100% 100%,
+    100% 62%,
+    92% 62%,
+    92% 92%,
+    62% 92%,
+    62% 100%,
+    100% 100%,
+    100% 0,
+    62% 0,
+    62% 8%,
+    92% 8%,
+    92% 38%,
+    100% 38%,
+    100% 0
+  );
+}
+
+.lock-glyph::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 46%,
+    currentColor 46%,
+    currentColor 54%,
+    transparent 54%
+  );
+}
+
+/* Blinking caret shown while narration is still arriving. */
+.caret::after {
+  content: "▌";
+  margin-left: 2px;
+  color: var(--color-system);
+  animation: caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes caret-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.bar-slam {
+  animation: bar-slam 280ms var(--ease-system) 1;
+  transform-origin: center left;
+}
+
+@keyframes bar-slam {
+  0% {
+    transform: scaleX(1);
+    filter: brightness(1);
+  }
+  35% {
+    transform: scaleX(1.04) scaleY(1.7);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scaleX(1);
+    filter: brightness(1);
+  }
+}
+
+/* ------------------------------------------------------------- Panel stage */
+
+.panel-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--panel-radius);
+  background: #05070e;
+  isolation: isolate;
+}
+
+/* Frame size is the glow-up: cramped early, full bleed once the player is a
+   presence. Death always gets the largest frame. */
+.shot-cramped {
+  height: 48vh;
+  min-height: 280px;
+  max-height: 420px;
+}
+
+.shot-standard {
+  height: 56vh;
+  min-height: 340px;
+  max-height: 560px;
+}
+
+.shot-bleed {
+  height: 70vh;
+  min-height: 420px;
+  max-height: 720px;
+}
+
+/* Phone + sticky choice dock: a 70vh bleed leaves the caption under the thumb. */
+@media (max-width: 767px) {
+  .shot-cramped {
+    height: 36vh;
+    min-height: 220px;
+    max-height: 320px;
+  }
+
+  .shot-standard {
+    height: 40vh;
+    min-height: 240px;
+    max-height: 360px;
+  }
+
+  .shot-bleed {
+    height: 46vh;
+    min-height: 280px;
+    max-height: 400px;
+  }
+}
+
+.plate {
+  position: absolute;
+  inset: 0;
+}
+
+/* Keeps caption type readable over any plate without a text-shadow hack. */
+.plate-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 6, 13, 0.45) 0%,
+    rgba(4, 6, 13, 0) 30%,
+    rgba(4, 6, 13, 0.18) 55%,
+    rgba(4, 6, 13, 0.92) 100%
+  );
+}
+
+/* Fine crosshatch rather than true noise: cheap, tiles reliably, and reads as
+   print grain at this opacity. */
+.plate-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.5) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.5) 0 1px,
+      transparent 1px 4px
+    );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.has-still .plate-grain {
+  opacity: 0.03;
+}
+
+/* A painted panel is the picture. Mood washes were designed for empty CSS
+   plates and they paint the whole frame red/blue — hide them on stills and
+   keep only a thin caption scrim. */
+.has-still .plate-tint {
+  display: none;
+}
+
+.has-still .plate-graded {
+  filter: none;
+}
+
+.has-still .plate-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 6, 13, 0.18) 0%,
+    transparent 22%,
+    transparent 62%,
+    rgba(4, 6, 13, 0.55) 100%
+  );
+}
+
+/* Generated epilogue stills fade over the local plate after the run has ended. */
+.plate-epilogue {
+  animation: fx-in 700ms ease-out 1 forwards;
+}
+
+/* --- Art plates. CSS-composed environments; a painted webp, when one exists,
+   layers on top of the matching plate and inherits the same mood grade. --- */
+
+/* Dead fluorescent ceiling: thin panel seams, one live tube, and the grid
+   fading out as it recedes. Seams are lines, not bands — wide bands read as a
+   broken image rather than a ceiling. */
+.plate-awakening-office {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(224, 255, 240, 0.16) 0 1px,
+      transparent 1px 48px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(224, 255, 240, 0.12) 0 1px,
+      transparent 1px 36px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(226, 255, 244, 0.22) 0%,
+      transparent 34%
+    ),
+    radial-gradient(
+      42% 16% at 34% 14%,
+      rgba(236, 255, 248, 0.42),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #0d1512 0%, #090d13 62%, #06080c 100%);
+}
+
+.plate-gate-carpark {
+  background:
+    radial-gradient(
+      22% 30% at 62% 44%,
+      rgba(96, 150, 255, 0.85),
+      rgba(40, 60, 150, 0.35) 60%,
+      transparent 78%
+    ),
+    radial-gradient(
+      60% 40% at 62% 44%,
+      rgba(76, 201, 255, 0.14),
+      transparent 70%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0 2px,
+      transparent 2px 120px
+    ),
+    linear-gradient(180deg, #060a16 0%, #0b1020 62%, #05070c 100%);
+}
+
+.plate-dungeon-pillar {
+  background:
+    radial-gradient(
+      14% 46% at 68% 62%,
+      rgba(2, 3, 6, 0.95),
+      transparent 72%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 26%,
+      rgba(28, 38, 54, 0.9) 30%,
+      rgba(52, 66, 84, 0.75) 38%,
+      rgba(20, 28, 40, 0.9) 44%,
+      transparent 48%
+    ),
+    radial-gradient(
+      80% 60% at 20% 20%,
+      rgba(76, 201, 255, 0.12),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #080c14 0%, #0a0f18 60%, #04060b 100%);
+}
+
+.plate-dungeon-safe {
+  background:
+    radial-gradient(
+      40% 26% at 50% 88%,
+      rgba(120, 220, 255, 0.35),
+      transparent 72%
+    ),
+    radial-gradient(
+      70% 50% at 50% 50%,
+      rgba(30, 60, 84, 0.5),
+      transparent 74%
+    ),
+    linear-gradient(180deg, #060b12 0%, #0a141d 70%, #071018 100%);
+}
+
+.plate-dungeon-collapse {
+  background:
+    repeating-linear-gradient(
+      104deg,
+      rgba(210, 200, 180, 0.11) 0 3px,
+      transparent 3px 26px
+    ),
+    radial-gradient(18% 44% at 24% 74%, rgba(2, 4, 8, 0.95), transparent 70%),
+    radial-gradient(16% 40% at 72% 70%, rgba(2, 4, 8, 0.92), transparent 70%),
+    linear-gradient(180deg, #14110c 0%, #0a0a0e 60%, #050507 100%);
+}
+
+.plate-dungeon-hunters {
+  background:
+    radial-gradient(9% 30% at 34% 70%, rgba(2, 3, 6, 0.96), transparent 74%),
+    radial-gradient(10% 34% at 50% 68%, rgba(2, 3, 6, 0.96), transparent 74%),
+    radial-gradient(8% 27% at 65% 71%, rgba(2, 3, 6, 0.94), transparent 74%),
+    radial-gradient(
+      26% 40% at 50% 34%,
+      rgba(120, 170, 220, 0.28),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #070b12 0%, #0a0e16 60%, #04060a 100%);
+}
+
+.plate-temple-commandments {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(200, 220, 255, 0.09) 0 2px,
+      transparent 2px 12px
+    ),
+    radial-gradient(7% 24% at 24% 76%, rgba(3, 4, 8, 0.95), transparent 76%),
+    radial-gradient(7% 24% at 40% 76%, rgba(3, 4, 8, 0.95), transparent 76%),
+    radial-gradient(7% 24% at 58% 76%, rgba(3, 4, 8, 0.95), transparent 76%),
+    radial-gradient(7% 24% at 74% 76%, rgba(3, 4, 8, 0.95), transparent 76%),
+    linear-gradient(180deg, #0a0a12 0%, #10101c 55%, #050509 100%);
+}
+
+.plate-hospital-stairwell {
+  background:
+    linear-gradient(
+      118deg,
+      transparent 40%,
+      rgba(243, 230, 200, 0.12) 42%,
+      transparent 46%
+    ),
+    repeating-linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.05) 0 2px,
+      transparent 2px 44px
+    ),
+    radial-gradient(
+      36% 30% at 78% 22%,
+      rgba(243, 230, 200, 0.3),
+      transparent 74%
+    ),
+    linear-gradient(180deg, #100e0c 0%, #0b0d12 70%, #06080d 100%);
+}
+
+.plate-penalty-legs {
+  background:
+    repeating-linear-gradient(
+      82deg,
+      rgba(0, 0, 0, 0.7) 0 2px,
+      transparent 2px 19px
+    ),
+    repeating-linear-gradient(
+      98deg,
+      rgba(0, 0, 0, 0.55) 0 2px,
+      transparent 2px 23px
+    ),
+    radial-gradient(
+      70% 40% at 50% 96%,
+      rgba(150, 110, 60, 0.28),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #08060a 0%, #120d0c 72%, #050406 100%);
+}
+
+.plate-surface-cafe {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 244, 214, 0.22) 0%,
+      transparent 44%
+    ),
+    radial-gradient(
+      30% 22% at 50% 82%,
+      rgba(40, 26, 14, 0.7),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #1a1712 0%, #15120e 60%, #0b0906 100%);
+}
+
+.plate-surface-association {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(226, 255, 244, 0.1) 0 1px,
+      transparent 1px 72px
+    ),
+    radial-gradient(
+      24% 30% at 50% 60%,
+      rgba(76, 201, 255, 0.3),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #0c1212 0%, #0a0f14 62%, #06080c 100%);
+}
+
+.plate-system-shop {
+  background:
+    radial-gradient(8% 26% at 32% 66%, rgba(3, 3, 8, 0.95), transparent 76%),
+    radial-gradient(8% 26% at 50% 66%, rgba(3, 3, 8, 0.95), transparent 76%),
+    radial-gradient(8% 26% at 68% 66%, rgba(3, 3, 8, 0.95), transparent 76%),
+    radial-gradient(
+      60% 46% at 50% 36%,
+      rgba(90, 120, 255, 0.24),
+      transparent 74%
+    ),
+    linear-gradient(180deg, #060714 0%, #0a0a1a 60%, #04040a 100%);
+}
+
+.plate-redgate-snow {
+  background:
+    radial-gradient(
+      20% 34% at 50% 50%,
+      rgba(255, 45, 85, 0.5),
+      rgba(90, 10, 26, 0.3) 62%,
+      transparent 78%
+    ),
+    radial-gradient(
+      80% 60% at 50% 50%,
+      rgba(140, 180, 210, 0.12),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #0a0f14 0%, #101a20 60%, #06090c 100%);
+}
+
+.plate-ending-death {
+  background:
+    radial-gradient(
+      38% 22% at 50% 80%,
+      rgba(76, 201, 255, 0.22),
+      transparent 74%
+    ),
+    linear-gradient(180deg, #06070a 0%, #0a0b0e 66%, #030304 100%);
+}
+
+.plate-ending-victory {
+  background:
+    radial-gradient(
+      10% 46% at 50% 58%,
+      rgba(2, 3, 6, 0.96),
+      transparent 74%
+    ),
+    radial-gradient(
+      50% 40% at 50% 46%,
+      rgba(76, 201, 255, 0.3),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #04060d 0%, #070c18 56%, #020306 100%);
+}
+
+.plate-job-throne {
+  background:
+    radial-gradient(18% 28% at 50% 72%, rgba(2, 3, 8, 0.96), transparent 72%),
+    linear-gradient(
+      180deg,
+      transparent 48%,
+      rgba(20, 24, 40, 0.85) 58%,
+      rgba(8, 10, 18, 0.95) 72%,
+      transparent 78%
+    ),
+    radial-gradient(8% 36% at 50% 54%, rgba(3, 4, 10, 0.95), transparent 74%),
+    radial-gradient(
+      40% 36% at 50% 38%,
+      rgba(107, 92, 255, 0.18),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #07060e 0%, #0c0b16 58%, #04040a 100%);
+}
+
+.plate-surface-night {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 210, 120, 0.08) 0 2px,
+      transparent 2px 90px
+    ),
+    radial-gradient(
+      12% 10% at 72% 38%,
+      rgba(255, 196, 90, 0.45),
+      transparent 74%
+    ),
+    radial-gradient(
+      50% 30% at 30% 80%,
+      rgba(243, 230, 200, 0.1),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #0a0d16 0%, #10141c 55%, #06080d 100%);
+}
+
+.plate-shadow-void {
+  background:
+    radial-gradient(
+      42% 36% at 50% 58%,
+      rgba(107, 92, 255, 0.2),
+      transparent 70%
+    ),
+    radial-gradient(18% 22% at 50% 80%, rgba(2, 2, 8, 0.95), transparent 72%),
+    linear-gradient(180deg, #05040c 0%, #0b0914 58%, #030208 100%);
+}
+
+.plate-castle-stair {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(80, 30, 20, 0.18) 0 8px,
+      transparent 8px 28px
+    ),
+    radial-gradient(
+      60% 40% at 50% 100%,
+      rgba(255, 90, 40, 0.18),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #12080a 0%, #1a0c0e 55%, #070304 100%);
+}
+
+.plate-hive-tunnel {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 40%,
+      rgba(180, 120, 40, 0.12) 0 12px,
+      transparent 12px 28px
+    ),
+    linear-gradient(180deg, #120e08 0%, #1a140c 58%, #080604 100%);
+}
+
+/* --- Mood grades. Independent of the plate, so one still can play as an
+   assessment room or a bloodied one. --- */
+
+.mood-fluorescent {
+  --plate-tint: rgba(198, 255, 232, 0.12);
+  --plate-filter: saturate(0.75) contrast(1.1) brightness(1.08);
+}
+
+.mood-night {
+  --plate-tint: rgba(30, 60, 120, 0.16);
+  --plate-filter: saturate(0.9) contrast(1.05);
+}
+
+.mood-ice {
+  --plate-tint: rgba(150, 210, 255, 0.14);
+  --plate-filter: saturate(0.45) contrast(1.16) brightness(0.95);
+}
+
+.mood-blood {
+  --plate-tint: rgba(255, 45, 85, 0.24);
+  --plate-filter: saturate(1.15) contrast(1.12) brightness(0.88);
+}
+
+.mood-gold {
+  --plate-tint: rgba(255, 176, 32, 0.16);
+  --plate-filter: saturate(1.1) contrast(1.04);
+}
+
+.mood-warm {
+  --plate-tint: rgba(243, 230, 200, 0.14);
+  --plate-filter: saturate(0.85) brightness(1.04);
+}
+
+.mood-void {
+  --plate-tint: rgba(10, 12, 24, 0.4);
+  --plate-filter: saturate(0.5) contrast(1.2) brightness(0.82);
+}
+
+.mood-aura {
+  --plate-tint: rgba(107, 92, 255, 0.14);
+  --plate-filter: saturate(0.8) contrast(1.35) brightness(0.92);
+}
+
+.plate-graded {
+  filter: var(--plate-filter, none);
+}
+
+/* A flat alpha wash rather than a blend mode: the plates are near-black, and
+   soft-light over black is invisible — a failed roll has to actually read red. */
+.plate-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--plate-tint, transparent);
+}
+
+/* ------------------------------------------------------------------- Effects */
+
+/* Panel-local FX render inside the stage so the scroll position stays sane. */
+.fx-shake-light {
+  animation: fx-shake 220ms var(--ease-system) 1;
+  --shake: 4px;
+}
+
+.fx-shake-heavy {
+  animation: fx-shake 300ms var(--ease-system) 1;
+  --shake: 9px;
+}
+
+@keyframes fx-shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    transform: translate3d(calc(var(--shake) * -1), 1px, 0);
+  }
+  28% {
+    transform: translate3d(var(--shake), -1px, 0);
+  }
+  46% {
+    transform: translate3d(calc(var(--shake) * -0.6), 0, 0);
+  }
+  68% {
+    transform: translate3d(calc(var(--shake) * 0.4), 1px, 0);
+  }
+}
+
+.fx-slash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    108deg,
+    transparent 44%,
+    rgba(255, 255, 255, 0.92) 49%,
+    rgba(200, 240, 255, 0.5) 51%,
+    transparent 56%
+  );
+  animation: fx-slash 320ms var(--ease-system) 1 forwards;
+}
+
+@keyframes fx-slash {
+  from {
+    opacity: 0;
+    transform: translateX(-16%) scaleX(1.3);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(14%) scaleX(1);
+  }
+}
+
+.fx-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 50%,
+    transparent 40%,
+    rgba(255, 45, 85, 0.55) 100%
+  );
+  animation: fx-fade-out 460ms ease-out 1 forwards;
+}
+
+.fx-vignette--long {
+  animation-duration: 900ms;
+}
+
+.fx-wash-warm {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 70% at 50% 70%,
+    rgba(125, 255, 168, 0.22),
+    transparent 72%
+  );
+  animation: fx-fade-out 700ms ease-out 1 forwards;
+}
+
+@keyframes fx-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fx-dust span,
+.fx-snow span {
+  position: absolute;
+  top: -8%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.fx-dust span {
+  width: 2px;
+  height: 2px;
+  background: rgba(220, 208, 180, 0.7);
+  animation: fx-fall linear infinite;
+}
+
+.fx-snow span {
+  width: 3px;
+  height: 3px;
+  background: rgba(226, 244, 255, 0.85);
+  animation: fx-fall linear infinite;
+}
+
+@keyframes fx-fall {
+  from {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(120vh) translateX(var(--drift, 12px));
+    opacity: 0;
+  }
+}
+
+/* Red Gate: the frame edges slam shut and the way back pinches out. */
+.fx-seal {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 0 rgba(255, 45, 85, 0.9);
+  animation: fx-seal 700ms var(--ease-system) 1 forwards;
+}
+
+@keyframes fx-seal {
+  from {
+    box-shadow: inset 0 0 0 0 rgba(255, 45, 85, 0);
+  }
+  55% {
+    box-shadow: inset 0 0 0 14px rgba(255, 45, 85, 0.85);
+  }
+  to {
+    box-shadow: inset 0 0 0 4px rgba(255, 45, 85, 0.45);
+  }
+}
+
+/* Persistent bed while the run is an anomaly. */
+.fx-anomaly-bed {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 50%,
+    transparent 55%,
+    rgba(255, 45, 85, 0.12) 100%
+  );
+}
+
+.fx-item-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    42% 34% at 50% 48%,
+    rgba(255, 176, 32, 0.28),
+    transparent 72%
+  );
+  animation: fx-fade-out 720ms ease-out 1 forwards;
+}
+
+.fx-shadow-bed {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 70% at 50% 100%,
+    rgba(107, 92, 255, 0.12),
+    transparent 68%
+  );
+}
+.fx-rings {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.fx-rings i {
+  position: absolute;
+  width: 40vmin;
+  height: 40vmin;
+  border: 1px solid rgba(76, 201, 255, 0.7);
+  border-radius: 50%;
+  animation: fx-ring var(--duration-levelup) var(--ease-system) 1 forwards;
+}
+
+.fx-rings i:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.fx-rings i:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+@keyframes fx-ring {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.fx-motes span {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(76, 201, 255, 0.9);
+  animation: fx-rise 1100ms ease-out 1 forwards;
+}
+
+@keyframes fx-rise {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-140px);
+    opacity: 0;
+  }
+}
+
+.fx-float-number {
+  position: absolute;
+  font-variant-numeric: tabular-nums;
+  animation: fx-float 620ms var(--ease-system) 1 forwards;
+}
+
+@keyframes fx-float {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-46px);
+    opacity: 0;
+  }
+}
+
+.fx-desat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  backdrop-filter: saturate(0.1) brightness(0.55);
+  animation: fx-in 600ms ease-out 1 forwards;
+}
+
+@keyframes fx-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Low HP and high fatigue warn in the chrome so no tutorial has to. */
+.pulse-danger {
+  animation: pulse-danger 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(255, 77, 109, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 26px 0 rgba(255, 77, 109, 0.28);
+  }
+}
+
+.pulse-warn {
+  animation: pulse-warn 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-warn {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 176, 32, 0.7));
+  }
+}
+
+/* S-rank chip breathes. The rank chip is the glow-up meter. */
+.rank-breathe {
+  animation: rank-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes rank-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(76, 201, 255, 0.7), 0 0 8px rgba(76, 201, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(76, 201, 255, 0.9), 0 0 20px rgba(76, 201, 255, 0.55);
+  }
+}
+
+/* The gate tear on the start screen. */
+.gate-tear {
+  animation: gate-tear 6s ease-in-out infinite;
+}
+
+@keyframes gate-tear {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scaleY(1.06) scaleX(0.97);
+    opacity: 1;
+  }
+}
+
+/* ----------------------------------------------------- Reduced motion */
+
+/* Information is never removed here — only the movement that carries it.
+   Level-up and death still present as static full-screen System cards. */
+@media (prefers-reduced-motion: reduce) {
+  .caret::after,
+  .pulse-danger,
+  .pulse-warn,
+  .rank-breathe,
+  .gate-tear,
+  .system-scan::before,
+  .resolve-hold .system-window {
+    animation: none;
+  }
+
+  .fx-dust,
+  .fx-snow,
+  .fx-motes {
+    display: none;
+  }
+
+  .fx-shake-light,
+  .fx-shake-heavy {
+    animation: none;
+  }
+
+  .bar-slam,
+  .fx-slash,
+  .fx-vignette,
+  .fx-vignette--long,
+  .fx-wash-warm,
+  .fx-seal,
+  .fx-desat,
+  .fx-float-number {
+    animation-duration: 150ms;
+    animation-timing-function: linear;
+  }
+
+  .fx-rings i {
+    animation: fx-in 150ms linear 1 forwards;
+    transform: scale(1.4);
+  }
+}

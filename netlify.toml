@@ -1,0 +1,11 @@
+# Player-facing Next.js client. The Fastify API, Postgres, and Redis live on Render.
+[build]
+  command = "npm run build -w @system/shared && npm run build -w @system/web"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# NEXT_PUBLIC_API_URL is set in the Netlify UI / CLI (the Render API hostname).
+# Do not hardcode it here — it is inlined at build time.

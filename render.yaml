@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Fastify API + managed Postgres + Key Value. The player-facing Next.js app
+# is on Netlify; set CORS_ORIGIN to that origin after the first Netlify deploy.
+# GEMINI_API_KEY and COHERE_API_KEY are filled in the Render Dashboard.
+#
+# Note on plans: the API holds SSE connections open and runs speculative
+# generation between turns, so it must not spin down. Free instances sleep after
+# 15 minutes of inactivity and would drop live runs and warm caches.
+
+previews:
+  generation: manual
+  expireAfterDays: 5
+
+projects:
+  - name: system-rpg
+    environments:
+      - name: production
+        databases:
+          - name: system-db
+            plan: basic-256mb
+            region: oregon
+            postgresMajorVersion: "17"
+
+        services:
+          - type: keyvalue
+            name: system-cache
+            plan: starter
+            region: oregon
+            # Every session key carries a TTL, so under pressure the right thing
+            # to drop is whatever expires soonest rather than rejecting writes.
+            maxmemoryPolicy: volatile-ttl
+            ipAllowList: []
+
+          - type: web
+            name: system-api
+            runtime: node
+            plan: starter
+            region: oregon
+            healthCheckPath: /health
+            autoDeployTrigger: commit
+            buildCommand: npm ci && npm run build -w @system/shared && npm run build -w @system/server
+            # Schema changes go live before the new code serves traffic.
+            preDeployCommand: npm run migrate -w @system/server
+            startCommand: npm run start -w @system/server
+            buildFilter:
+              paths:
+                - apps/server/**
+                - packages/shared/**
+                - package.json
+                - package-lock.json
+                - render.yaml
+            envVars:
+              - key: NODE_ENV
+                value: production
+              - key: HOST
+                value: "0.0.0.0"
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: system-db
+                  property: connectionString
+              - key: REDIS_URL
+                fromService:
+                  type: keyvalue
+                  name: system-cache
+                  property: connectionString
+              - key: GEMINI_API_KEY
+                sync: false
+              - key: GEMINI_MODEL
+                value: gemini-2.5-flash
+              - key: COHERE_API_KEY
+                sync: false
+              - key: COHERE_MODEL
+                value: command-r-08-2024
+              - key: LLM_PROVIDER
+                value: auto
+              - key: SESSION_TTL_SECONDS
+                value: "86400"
+              - key: STATIC_NODE_RATIO
+                value: "0.35"
+              - key: COLLISION_THRESHOLD
+                value: "0.7"
+              # Each unit of fan-out costs two extra model calls per turn.
+              - key: PREFETCH_FANOUT
+                value: "1"
+              # Player site is on Netlify. Set this to that origin after the
+              # first Netlify deploy (comma-separated if you keep a Render URL too).
+              - key: CORS_ORIGIN
+                sync: false
