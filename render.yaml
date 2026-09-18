@@ -43,9 +43,8 @@ projects:
             # --include=dev is required: NODE_ENV=production would otherwise skip
             # typescript, which the build uses. Runtime migrate uses compiled JS.
             buildCommand: npm ci --include=dev && npm run build -w @system/shared && npm run build -w @system/server
-            # Schema changes go live before the new process serves traffic.
-            # Boot also migrates; this keeps a failed migration from starting.
-            preDeployCommand: node apps/server/dist/db/migrate-cli.js
+            # Free web instances cannot run pre-deploy commands. Boot migrates
+            # and seeds before listen() in apps/server/src/index.ts.
             startCommand: npm run start -w @system/server
             buildFilter:
               paths:
