@@ -6,11 +6,8 @@
 #
 # Hobby / free tier: the API sleeps after 15 minutes idle (cold start ~1 min),
 # free Postgres expires after 30 days, and free Key Value has no persistence
-# (session keys vanish if the instance restarts).
-
-previews:
-  generation: manual
-  expireAfterDays: 5
+# (session keys vanish if the instance restarts). Hobby workspaces cannot
+# create preview environments, so this file does not declare `previews`.
 
 projects:
   - name: system-rpg
