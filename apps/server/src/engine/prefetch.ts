@@ -6,6 +6,7 @@ import {
   buildChoicesPrompt,
   buildNarrationPrompt,
   buildSystemPrompt,
+  describeSituation,
   retrievalQuery,
   type PromptContext,
 } from "./llm/prompts.js";
@@ -112,6 +113,13 @@ async function prefetchBranch(
     level: prepared.nextStats.level,
     success: prepared.outcome.success,
     action: `${choice.label} ${prepared.outcome.summary}`,
+    rank: prepared.nextStats.rank,
+    strength: prepared.nextStats.strength,
+    inventory: inventoryNow,
+    jobChanged: Boolean(meta.jobChanged),
+    leveledUp: prepared.outcome.leveledUp,
+    rankChanged: prepared.outcome.rankChanged,
+    scene: prepared.route.node?.visual.artKey,
   });
 
   const promptCtx: PromptContext = {
@@ -122,6 +130,7 @@ async function prefetchBranch(
     runType: meta.runType,
     artKey: frame.artKey,
     plate: plateLine(frame.artKey),
+    jobChanged: Boolean(meta.jobChanged),
   };
   const systemPrompt = buildSystemPrompt(
     promptCtx,
@@ -144,7 +153,10 @@ async function prefetchBranch(
       : generateChoices({
           systemPrompt,
           userPrompt: buildChoicesPrompt(
-            `${choice.label} -> ${prepared.outcome.summary}`,
+            describeSituation(promptCtx, {
+              action: choice.label,
+              summary: prepared.outcome.summary,
+            }),
             promptCtx,
           ),
           seed,

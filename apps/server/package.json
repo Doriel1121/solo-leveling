@@ -12,6 +12,8 @@
     "seed": "tsx src/db/seed-cli.ts",
     "play": "tsx scripts/playthrough.ts",
     "stills": "tsx scripts/generate-stills.ts",
+    "stills:aura": "tsx scripts/generate-stills.ts --states=aura --variants-only",
+    "stills:gear": "tsx scripts/generate-stills.ts --states=armed,shadow --variants-only",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

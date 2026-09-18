@@ -1,5 +1,5 @@
 import type { FxId, Panel, PanelVisual, ServerEvent } from "@system/shared";
-import { resolveStillKey, truncateCaption } from "@system/shared";
+import { stillScene, truncateCaption } from "@system/shared";
 import { markRunType, finishRun } from "../db/repositories/runs.js";
 import { promoteHighestRank } from "../db/repositories/users.js";
 import {
@@ -31,6 +31,7 @@ import {
   buildChoicesPrompt,
   buildNarrationPrompt,
   buildSystemPrompt,
+  describeSituation,
   retrievalQuery,
   type PromptContext,
 } from "./llm/prompts.js";
@@ -152,27 +153,28 @@ export async function* playTurn(
     ? [...new Set([...inventory, ...outcome.granted])]
     : inventory;
 
-  // An authored node brings its own plate; otherwise derive one from the state.
-  const frame = route.node
-    ? {
-        artKey: resolveStillKey(route.node.visual.artKey),
-        mood: route.node.visual.mood,
-        shot: route.node.visual.shot,
-      }
-    : visualFor({
-        location: route.location,
-        kind: outcome.kind,
-        level: nextStats.level,
-        success: outcome.success,
-        action: `${choice.label} ${outcome.summary}`,
-      });
+  // An authored node brings its own plate; hero state still follows live stats.
+  const frame = visualFor({
+    location: route.location,
+    kind: outcome.kind,
+    level: nextStats.level,
+    success: outcome.success,
+    action: `${choice.label} ${outcome.summary}`,
+    rank: nextStats.rank,
+    strength: nextStats.strength,
+    inventory: inventoryNow,
+    jobChanged: Boolean(meta.jobChanged),
+    leveledUp: outcome.leveledUp,
+    rankChanged: outcome.rankChanged,
+    scene: route.node?.visual.artKey,
+  });
 
   const resolveFx: FxId[] = [...outcome.fx];
   const sceneFx: FxId[] = [];
   if (divertNow) sceneFx.push("red_seal");
   if (frame.artKey.startsWith("system.shop") && !outcome.terminal) sceneFx.push("shop_tempt");
-  if (frame.artKey === "dungeon.collapse") sceneFx.push("collapse");
-  if (frame.artKey === "dungeon.safe" && outcome.success && choice.risk === "safe") {
+  if (stillScene(frame.artKey) === "dungeon.collapse") sceneFx.push("collapse");
+  if (stillScene(frame.artKey) === "dungeon.safe" && outcome.success && choice.risk === "safe") {
     sceneFx.push("rest");
   }
   if (
@@ -231,6 +233,7 @@ export async function* playTurn(
     runType: meta.runType,
     artKey: frame.artKey,
     plate: plateLine(frame.artKey),
+    jobChanged: Boolean(meta.jobChanged),
   };
   const systemPrompt = buildSystemPrompt(
     promptCtx,
@@ -299,7 +302,10 @@ export async function* playTurn(
       : generateChoices({
           systemPrompt,
           userPrompt: buildChoicesPrompt(
-            `${choice.label} -> ${outcome.summary}`,
+            describeSituation(promptCtx, {
+              action: choice.label,
+              summary: outcome.summary,
+            }),
             promptCtx,
           ),
           seed,

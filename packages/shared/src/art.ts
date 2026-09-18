@@ -1,3 +1,10 @@
+import {
+  HERO_STATE_FALLBACKS,
+  splitStillKey,
+  variantStillKey,
+  type HeroState,
+} from "./hero.js";
+
 /**
  * Catalogue of original hunter stills. The engine paints one of these before
  * the first word; Gemini writes to the plate, it does not invent a new one
@@ -120,7 +127,82 @@ export type ArtKey = keyof typeof PLATE_COPY;
 
 export const PLATE_KEYS = Object.keys(PLATE_COPY) as ArtKey[];
 
-/** Keys that actually have a PNG in `apps/web/public/art`. */
+/** Keys that actually have a PNG in `apps/web/public/art`. Worn = unsuffixed. */
+export const PAINTED_HERO_VARIANTS: readonly string[] = [
+  "dungeon.boss.armed",
+  "dungeon.boss.aura",
+  "dungeon.boss.shadow",
+  "dungeon.collapse.armed",
+  "dungeon.collapse.aura",
+  "dungeon.collapse.shadow",
+  "dungeon.core.armed",
+  "dungeon.core.aura",
+  "dungeon.core.shadow",
+  "dungeon.hunters.armed",
+  "dungeon.hunters.aura",
+  "dungeon.hunters.shadow",
+  "dungeon.pillar.armed",
+  "dungeon.pillar.aura",
+  "dungeon.pillar.shadow",
+  "dungeon.safe.armed",
+  "dungeon.safe.aura",
+  "dungeon.safe.shadow",
+  "dungeon.spare.armed",
+  "dungeon.spare.aura",
+  "dungeon.spare.shadow",
+  "dungeon.strike.armed",
+  "dungeon.strike.aura",
+  "dungeon.strike.shadow",
+  "ending.death.armed",
+  "ending.death.aura",
+  "ending.death.shadow",
+  "ending.victory.armed",
+  "ending.victory.aura",
+  "ending.victory.shadow",
+  "gate.break.armed",
+  "gate.break.aura",
+  "gate.break.shadow",
+  "gate.carpark.armed",
+  "gate.carpark.aura",
+  "gate.carpark.shadow",
+  "hospital.stairwell.armed",
+  "hospital.stairwell.aura",
+  "hospital.stairwell.shadow",
+  "ice.camp.armed",
+  "ice.camp.aura",
+  "ice.camp.shadow",
+  "job.survive.armed",
+  "job.survive.aura",
+  "job.survive.shadow",
+  "job.throne.armed",
+  "job.throne.aura",
+  "job.throne.shadow",
+  "penalty.legs.armed",
+  "penalty.legs.aura",
+  "penalty.legs.shadow",
+  "redgate.snow.armed",
+  "redgate.snow.aura",
+  "redgate.snow.shadow",
+  "shadow.arise.armed",
+  "shadow.arise.aura",
+  "shadow.arise.shadow",
+  "surface.association.armed",
+  "surface.association.aura",
+  "surface.association.shadow",
+  "surface.cafe.armed",
+  "surface.cafe.aura",
+  "surface.cafe.shadow",
+  "surface.retest.armed",
+  "surface.retest.aura",
+  "surface.retest.shadow",
+  "temple.altar.armed",
+  "temple.altar.aura",
+  "temple.altar.shadow",
+  "temple.commandments.armed",
+  "temple.commandments.aura",
+  "temple.commandments.shadow",
+];
+
 export const PAINTED_STILLS: ReadonlySet<string> = new Set<string>([
   "awakening.office",
   "gate.carpark",
@@ -163,6 +245,7 @@ export const PAINTED_STILLS: ReadonlySet<string> = new Set<string>([
   "healer.exit",
   "ending.death",
   "ending.victory",
+  ...PAINTED_HERO_VARIANTS,
 ]);
 
 /** Unpainted catalogue keys → nearest still that exists on disk. */
@@ -203,14 +286,24 @@ const STILL_BY_PREFIX: Record<string, string> = {
 };
 
 /**
- * Every panel must resolve to a PNG. Catalogue keys without a file borrow the
- * nearest painted neighbour so the stage is never an empty CSS wash.
+ * Every panel must resolve to a PNG. Hero-state suffixes fall back toward the
+ * E-rank plate of the same scene; missing scenes borrow a neighbour.
  */
 export function resolveStillKey(artKey: string): string {
-  if (PAINTED_STILLS.has(artKey)) return artKey;
-  const nearest = STILL_NEAREST[artKey];
-  if (nearest && PAINTED_STILLS.has(nearest)) return nearest;
-  const prefix = artKey.split(".")[0] ?? "";
+  const { scene, state } = splitStillKey(artKey);
+  const wanted: HeroState = state ?? "worn";
+  for (const candidate of HERO_STATE_FALLBACKS[wanted]) {
+    const key = variantStillKey(scene, candidate);
+    if (PAINTED_STILLS.has(key)) return key;
+  }
+  const nearest = STILL_NEAREST[scene];
+  if (nearest) {
+    for (const candidate of HERO_STATE_FALLBACKS[wanted]) {
+      const key = variantStillKey(nearest, candidate);
+      if (PAINTED_STILLS.has(key)) return key;
+    }
+  }
+  const prefix = scene.split(".")[0] ?? "";
   const fromPrefix = STILL_BY_PREFIX[prefix];
   if (fromPrefix && PAINTED_STILLS.has(fromPrefix)) return fromPrefix;
   return "dungeon.pillar";

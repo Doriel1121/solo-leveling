@@ -96,6 +96,36 @@ const CORPUS: LoreChunk[] = [
     tags: ["death", "injury", "wound", "heal", "potion", "hospital"],
     text: "Hunter deaths are permanent, common, and administratively routine. Wounds taken inside a dungeon do not heal on their own; without a healer or a potion, serious injury inside a gate is usually terminal. Fatigue accumulates across a raid and degrades reaction time long before it becomes visible.",
   },
+  {
+    id: "family",
+    topic: "Family and debt",
+    tags: ["family", "sister", "mother", "hospital", "debt", "ward", "cure"],
+    text: "The Player keeps running because someone at home cannot. Hospital bills, a sibling in school clothes, a parent who will not wake — that is the real HP bar. Skipping a national raid to brew a family cure is in character. Doing push-ups on a hospital stair while a landing door opens is more dangerous than another wolf. Power without a reason to live is empty aura.",
+  },
+  {
+    id: "commandments",
+    topic: "Temples of rules",
+    tags: ["temple", "commandment", "altar", "statue", "faith", "bow", "watcher"],
+    text: "Some dungeons are trials, not hunts. Commandments are lethal if misread. Statues move when unwatched. An altar may demand that someone stay so others can leave. The correct action is often humiliating (kneel, praise, stand still) rather than stylish. The Player who stays behind is the one the System can qualify.",
+  },
+  {
+    id: "urgent",
+    topic: "Urgent quests",
+    tags: ["urgent", "emergency", "kill", "human", "quest", "heart", "penalty"],
+    text: "The System issues dailies, mains, and urgent quests. Dailies are mundane training until the timer hits zero, then a Penalty Zone teleport. Urgent quests fire when the Player is about to die or when a human is about to kill them; failure can stop a heart. Some urgent quests demand the Player kill a person. That is a moral scar, not flavour text. The System does not apologise.",
+  },
+  {
+    id: "shadows",
+    topic: "Shadows",
+    tags: ["shadow", "arise", "extract", "army", "knight", "companion", "necromancy"],
+    text: "After Job Change, the Player may extract a shadow from a corpse they have the right to claim. Extraction fails if the target is stronger or the mana is incompatible. Named elites become companions with personality — a silent knight, a theatrical general, a reckless bruiser — not inventory items. Ordinary hunters cannot see the System; they can see the army once it is standing in the room.",
+  },
+  {
+    id: "shop",
+    topic: "System shop",
+    tags: ["shop", "gold", "potion", "loot", "buy", "purchase", "window"],
+    text: "Kills and quests pay gold into a System shop only the Player can see. Stock is slightly wrong and slightly tempting: potions, shortblades, loot boxes scaled to current level. During a Job Change dungeon the shop, potions, and level-up healing are disabled. The Player cannot spend gold other hunters can see.",
+  },
 ];
 
 const INVARIANTS = [
@@ -108,6 +138,11 @@ const INVARIANTS = [
   "Do not introduce a named NPC solely so they can die in this panel. If they die, the player chose something that made it so.",
   "Do not have NPCs react to System windows. They cannot see them.",
   "Never recap System numbers in the body. The window already said them.",
+  "Do not write a panel whose punchline is other hunters being impressed. Named hunters may succeed off-screen; they are not cheerleaders.",
+  "Before Job Change, do not imply invincibility and do not offer Arise or extraction.",
+  "After a power spike, write colder and shorter. After a family beat, one uncool sentence is allowed.",
+  "Do not dump cosmology (rulers, monarchs, architects, absolute beings) in the first half of a run. Seed it as a wrong detail only when the player is already leaking or questioning the System.",
+  "Change the rule of the room (commandment, weather, timer, hostage, contract clause), not only the monster sprite.",
 ];
 
 function tokenize(value: string): string[] {

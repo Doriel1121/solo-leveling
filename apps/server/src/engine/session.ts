@@ -20,6 +20,7 @@ import { newPanelId } from "./llm/ids.js";
 import {
   buildChoicesPrompt,
   buildSystemPrompt,
+  describeSituation,
   type PromptContext,
 } from "./llm/prompts.js";
 import { lockChoices } from "./locking.js";
@@ -137,10 +138,13 @@ async function buildOpeningPanel(
     history: [],
     location: OPENING_LOCATION,
     runType: "canon",
+    jobChanged: false,
   };
-  const systemPrompt = buildSystemPrompt(promptCtx, "awakening system window player");
-  const situation =
-    "The player is an unranked E-rank hunter at a routine assessment when a System window opens that only they can see.";
+  const systemPrompt = buildSystemPrompt(promptCtx, "awakening system window player hospital daily");
+  const situation = [
+    describeSituation(promptCtx),
+    "The player is an unranked E-rank hunter at a routine assessment when a System window opens that only they can see.",
+  ].join("\n");
 
   const [prose, choices] = await Promise.all([
     collectPanelProse(
@@ -169,6 +173,10 @@ async function buildOpeningPanel(
           kind: "system",
           level: stats.level,
           success: true,
+          rank: stats.rank,
+          strength: stats.strength,
+          inventory: STARTING_INVENTORY,
+          jobChanged: false,
         }),
         caption: truncateCaption(prose.caption),
       },

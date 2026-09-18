@@ -5,7 +5,7 @@
  * the turn path; it is told which original hunter still is already on screen
  * and must caption that frame.
  */
-import { PLATE_COPY, type ArtKey } from "@system/shared";
+import { HERO_LOOK, PLATE_COPY, stillHeroState, stillScene, type ArtKey } from "@system/shared";
 
 export { PLATE_COPY, PLATE_KEYS } from "@system/shared";
 export type { ArtKey } from "@system/shared";
@@ -195,12 +195,16 @@ export function artKeyFromAction(action: string, fallback: string): string {
 }
 
 export function plateLine(artKey: string): string {
-  return (
-    PLATE_COPY[artKey as ArtKey] ??
-    "The same original E-rank hunter in a dark interior."
-  );
+  const scene = stillScene(artKey);
+  const sceneLine =
+    PLATE_COPY[scene as ArtKey] ??
+    "The same original E-rank hunter in a dark interior.";
+  return `${sceneLine} ${HERO_LOOK[stillHeroState(artKey)]}`;
 }
 
 export function plateScene(artKey: string): string {
-  return PLATE_SCENES[artKey as ArtKey] ?? plateLine(artKey);
+  const scene = stillScene(artKey);
+  const staging =
+    PLATE_SCENES[scene as ArtKey] ?? plateLine(scene);
+  return `${HERO_LOOK[stillHeroState(artKey)]} Scene: ${staging}`;
 }

@@ -1,5 +1,12 @@
-import type { PanelKind, PanelMood, PanelShot } from "@system/shared";
-import { resolveStillKey } from "@system/shared";
+import {
+  heroStateFor,
+  stillScene,
+  withHeroState,
+  type HunterRank,
+  type PanelKind,
+  type PanelMood,
+  type PanelShot,
+} from "@system/shared";
 import { artKeyFromAction } from "./plates.js";
 
 /**
@@ -9,6 +16,10 @@ import { artKeyFromAction } from "./plates.js";
  * the frame from `panel_start` alone, before a single narration token arrives.
  * Art is never generated per turn — that would put a loading state back into
  * the one path the engine exists to keep instant.
+ *
+ * `artKey` is the logical plate including hero state (`dungeon.strike.aura`).
+ * The PNG path is resolved on the client so a missing variant falls back
+ * without losing the blue-aura grade.
  */
 
 const ART_BY_LOCATION: Record<string, string> = {
@@ -40,6 +51,7 @@ export function moodFor(params: {
   location: string;
   kind: PanelKind;
   success: boolean;
+  heroState?: string;
 }): PanelMood {
   const { location, kind, success } = params;
 
@@ -48,6 +60,8 @@ export function moodFor(params: {
   if (kind === "red_gate" || location === "red_gate") return "ice";
   // A failed roll regrades whatever biome the player is standing in.
   if (!success) return "blood";
+  if (params.heroState === "aura") return "aura";
+  if (params.heroState === "shadow") return "void";
   if (kind === "combat") return "night";
   if (location === "awakening") return "fluorescent";
   if (location === "penalty_zone") return "void";
@@ -80,16 +94,38 @@ export function visualFor(params: {
   level: number;
   success: boolean;
   action?: string;
+  rank?: HunterRank;
+  strength?: number;
+  inventory?: readonly string[];
+  jobChanged?: boolean;
+  leveledUp?: boolean;
+  rankChanged?: boolean;
+  /** Authored scene key; hero state is applied on top. */
+  scene?: string;
 }): VisualFrame {
-  const base = artKeyFor(params.location, params.kind);
-  const artKey = resolveStillKey(
+  const scene =
     params.kind === "death" || params.kind === "victory"
-      ? base
-      : artKeyFromAction(params.action ?? "", base),
-  );
+      ? artKeyFor(params.location, params.kind)
+      : params.scene
+        ? stillScene(params.scene)
+        : artKeyFromAction(
+            params.action ?? "",
+            artKeyFor(params.location, params.kind),
+          );
+  const state = heroStateFor({
+    rank: params.rank ?? "E",
+    level: params.level,
+    strength: params.strength ?? 10,
+    inventory: params.inventory ?? [],
+    jobChanged: params.jobChanged,
+    leveledUp: params.leveledUp,
+    rankChanged: params.rankChanged,
+    kind: params.kind,
+  });
+  const artKey = withHeroState(scene, state);
   return {
     artKey,
-    mood: moodFor(params),
+    mood: moodFor({ ...params, heroState: state }),
     shot: shotFor(params.level, params.kind),
   };
 }

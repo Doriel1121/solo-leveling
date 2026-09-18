@@ -2,6 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import type { FxId, PanelVisual } from "@system/shared";
+import { stillHeroState } from "@system/shared";
+import { ManaOverlay } from "./ManaOverlay";
 import { artSrc, hasPaintedPlate, plateClass } from "@/lib/fx";
 
 /**
@@ -70,12 +72,13 @@ export function PanelArt({
 
   const snowing = active.has("red_seal") || visual.mood === "ice";
   const still = artSrc(visual.artKey);
+  const hero = stillHeroState(visual.artKey);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const painted = loadedSrc === still || Boolean(stillSrc);
 
   return (
     <div
-      className={`panel-stage mood-${visual.mood} shot-${visual.shot} ${shake} ${
+      className={`panel-stage mood-${visual.mood} shot-${visual.shot} hero-${hero} ${shake} ${
         painted ? "has-still" : ""
       }`}
       onClick={onTap}
@@ -94,6 +97,13 @@ export function PanelArt({
         onLoad={() => setLoadedSrc(still)}
         onError={(event) => {
           const img = event.currentTarget;
+          const current = img.getAttribute("src") ?? "";
+          const name = current.split("/").pop()?.replace(/\.png$/i, "") ?? "";
+          const stripped = name.replace(/\.(worn|armed|aura|shadow)$/i, "");
+          if (stripped && stripped !== name) {
+            img.src = `/art/${stripped}.png`;
+            return;
+          }
           const fallback = "/art/dungeon.pillar.png";
           if (!img.src.endsWith("dungeon.pillar.png")) {
             img.src = fallback;
@@ -138,6 +148,18 @@ export function PanelArt({
         <div className="fx-wash-warm" aria-hidden />
       )}
       {live("red_seal") && <div className="fx-seal" aria-hidden />}
+      {(hero === "aura" || live("level_up") || live("rank_up")) && (
+        <>
+          <div className="fx-mana-aura" aria-hidden />
+          <ManaOverlay variant={live("level_up") ? "burst" : "blue"} />
+        </>
+      )}
+      {hero === "shadow" && (
+        <>
+          <div className="fx-mana-aura fx-mana-aura--shadow" aria-hidden />
+          <ManaOverlay variant="shadow" />
+        </>
+      )}
 
       {children}
     </div>

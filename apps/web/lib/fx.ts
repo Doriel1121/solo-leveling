@@ -1,5 +1,5 @@
 import type { Choice, FxId } from "@system/shared";
-import { PAINTED_STILLS, resolveStillKey } from "@system/shared";
+import { PAINTED_STILLS, resolveStillKey, stillScene } from "@system/shared";
 
 /**
  * Effects that take over the screen. They preempt whatever is queued rather
@@ -69,7 +69,7 @@ const BIOME_PLATE: Record<string, string> = {
 };
 
 export function artSrc(artKey: string): string {
-  return `/art/${resolveStillKey(artKey)}.${ART_EXT}`;
+  return `/art/${artKey}.${ART_EXT}`;
 }
 
 export function hasPaintedPlate(artKey: string): boolean {
@@ -78,8 +78,9 @@ export function hasPaintedPlate(artKey: string): boolean {
 
 /** `dungeon.pillar` -> specific class plus a biome fallback. */
 export function plateClass(artKey: string): string {
-  const specific = `plate-${artKey.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
-  const prefix = artKey.split(".")[0] ?? "";
+  const scene = stillScene(artKey);
+  const specific = `plate-${scene.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
+  const prefix = scene.split(".")[0] ?? "";
   const biome = BIOME_PLATE[prefix] ?? "plate-dungeon-pillar";
   return specific === biome ? specific : `${specific} ${biome}`;
 }

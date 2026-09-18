@@ -727,8 +727,8 @@ body {
 }
 
 .mood-aura {
-  --plate-tint: rgba(107, 92, 255, 0.14);
-  --plate-filter: saturate(0.8) contrast(1.35) brightness(0.92);
+  --plate-tint: rgba(56, 189, 248, 0.22);
+  --plate-filter: saturate(1.15) contrast(1.28) brightness(1.02);
 }
 
 .plate-graded {
@@ -741,6 +741,91 @@ body {
   position: absolute;
   inset: 0;
   background: var(--plate-tint, transparent);
+}
+
+/* Electric-blue mana wrap — the series' "pure mana is blue" look.
+   Persistent on aura/shadow plates; pulses on level-up / rank-up. */
+.fx-mana-aura {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    radial-gradient(
+      ellipse 42% 58% at 50% 62%,
+      rgba(186, 230, 253, 0.55) 0%,
+      rgba(56, 189, 248, 0.32) 28%,
+      rgba(14, 165, 233, 0.12) 52%,
+      transparent 72%
+    );
+  mix-blend-mode: screen;
+  animation: fx-mana-breathe 1.8s ease-in-out infinite;
+}
+
+.fx-mana-plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.fx-mana-plate--burst {
+  animation: fx-mana-breathe 900ms ease-out 1;
+}
+
+.fx-mana-plate--shadow {
+  opacity: 0.9;
+}
+
+.fx-mana-aura--shadow {
+  background:
+    radial-gradient(
+      ellipse 42% 58% at 50% 62%,
+      rgba(224, 242, 254, 0.4) 0%,
+      rgba(56, 189, 248, 0.22) 26%,
+      rgba(139, 92, 246, 0.28) 48%,
+      rgba(76, 29, 149, 0.18) 68%,
+      transparent 80%
+    );
+}
+
+.hero-aura .plate-tint {
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(56, 189, 248, 0.28) 0%,
+    rgba(14, 116, 210, 0.1) 46%,
+    transparent 70%
+  );
+}
+
+.hero-shadow .plate-tint {
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(56, 189, 248, 0.16) 0%,
+    rgba(109, 40, 217, 0.2) 42%,
+    rgba(15, 10, 30, 0.28) 70%
+  );
+}
+
+.hero-armed .panel-stage,
+.hero-armed {
+  --plate-filter: saturate(1.05) contrast(1.08);
+}
+
+@keyframes fx-mana-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 /* ------------------------------------------------------------------- Effects */
@@ -1133,5 +1218,11 @@ body {
   .fx-rings i {
     animation: fx-in 150ms linear 1 forwards;
     transform: scale(1.4);
+  }
+
+  .fx-mana-aura {
+    animation: none;
+    opacity: 0.85;
+    transform: none;
   }
 }

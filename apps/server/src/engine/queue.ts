@@ -4,6 +4,7 @@
  * is empty), EndingCard keeps using the local death/victory plate.
  */
 import { llm } from "./llm/index.js";
+import { HERO_LOOK } from "@system/shared";
 import { plateLine } from "./plates.js";
 import { saveEpilogue } from "../state/sessionStore.js";
 
@@ -28,15 +29,16 @@ const EPILOGUE_ART: Record<"death" | "victory", string> = {
 };
 
 function stillPrompt(job: EpilogueJob): string {
-  const plate = plateLine(EPILOGUE_ART[job.outcome]);
+  const key = EPILOGUE_ART[job.outcome];
+  const look = job.outcome === "victory" ? HERO_LOOK.aura : HERO_LOOK.worn;
   return [
     "Original dark Korean manhwa webtoon still, cinematic lighting, ink and digital paint.",
-    "The same original character throughout: a lean exhausted Korean young-adult E-rank hunter, messy black hair, cheap cracked leather chestpiece over a navy hoodie, worn combat boots, tired eyes.",
+    look,
     "Not a licensed character. No readable text, no logos, no UI, no speech bubbles.",
-    plate,
+    plateLine(key),
     `Caption of the last panel: ${job.prompt}`,
     job.outcome === "victory"
-      ? "Quiet competence. He is walking out. No confetti, no smile."
+      ? "Quiet competence. He is walking out. Blue mana dust in the collapsing gate. No confetti, no smile."
       : "He has fallen. Unsentimental. The floor is close.",
   ].join(" ");
 }
