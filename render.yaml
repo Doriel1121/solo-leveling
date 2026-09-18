@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=https://render.com/schema/render.yaml.json
 #
-# Fastify API + managed Postgres + Key Value. The player-facing Next.js app
-# is on Netlify; set CORS_ORIGIN to that origin after the first Netlify deploy.
+# Fastify API + managed Postgres. The player-facing Next.js app is on Netlify.
 # GEMINI_API_KEY and COHERE_API_KEY are filled in the Render Dashboard.
 #
-# Hobby / free tier: the API sleeps after 15 minutes idle (cold start ~1 min),
-# free Postgres expires after 30 days, and free Key Value has no persistence
-# (session keys vanish if the instance restarts). Hobby workspaces cannot
-# create preview environments, so this file does not declare `previews`.
+# Hobby / free tier: the API sleeps after 15 minutes idle (cold start ~1 min)
+# and free Postgres expires after 30 days. Hobby workspaces allow only one
+# free Key Value instance, so this blueprint does not create Redis — sessions
+# live in process memory (same durability as free Key Value). Set REDIS_URL
+# in the Dashboard if you later attach an existing instance.
 
 projects:
   - name: system-rpg
@@ -20,16 +20,6 @@ projects:
             postgresMajorVersion: "17"
 
         services:
-          - type: keyvalue
-            name: system-cache
-            plan: free
-            region: oregon
-            # Free Key Value does not persist to disk; volatile-ttl still drops
-            # expired session keys first if memory pressure hits.
-            maxmemoryPolicy: volatile-ttl
-            persistenceMode: off
-            ipAllowList: []
-
           - type: web
             name: system-api
             runtime: node
@@ -61,11 +51,6 @@ projects:
                 fromDatabase:
                   name: system-db
                   property: connectionString
-              - key: REDIS_URL
-                fromService:
-                  type: keyvalue
-                  name: system-cache
-                  property: connectionString
               - key: GEMINI_API_KEY
                 sync: false
               - key: GEMINI_MODEL
@@ -88,4 +73,4 @@ projects:
               # Player site is on Netlify. Set this to that origin after the
               # first Netlify deploy (comma-separated if you keep a Render URL too).
               - key: CORS_ORIGIN
-                sync: false
+                value: "https://nimble-sunburst-8a42e6.netlify.app"

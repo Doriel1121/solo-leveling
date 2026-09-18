@@ -122,15 +122,15 @@ condition.
 
 ## Deploying
 
-The player site is **Netlify**. The API, Postgres, and Redis are **Render** on the **Hobby / free** plan.
+The player site is **Netlify**. The API and Postgres are **Render** on the **Hobby / free** plan. Sessions live in the API process (Hobby allows only one free Redis, and that slot is often already taken).
 
 1. Push this repo to GitHub (`https://github.com/Doriel1121/solo-leveling`).
-2. Apply the blueprint: [Create Render Blueprint](https://dashboard.render.com/blueprint/new?repo=https://github.com/Doriel1121/solo-leveling). Fill `GEMINI_API_KEY`, `COHERE_API_KEY`, and a temporary `CORS_ORIGIN` (you can use `http://localhost:3000` until the Netlify URL exists). Keep every instance on **Free**.
+2. Apply the blueprint: [Create Render Blueprint](https://dashboard.render.com/blueprint/new?repo=https://github.com/Doriel1121/solo-leveling). Fill `GEMINI_API_KEY` and `COHERE_API_KEY`. Keep every instance on **Free**.
 3. Copy the API URL (`https://system-api-….onrender.com`).
-4. Create the Netlify site from the same repo. Build settings live in `netlify.toml`. Set `NEXT_PUBLIC_API_URL` to that API URL (no trailing slash).
-5. After the Netlify URL exists, set Render `CORS_ORIGIN` to it (comma-separated if you also want localhost) and restart the API.
+4. Create the Netlify site from the same repo. Build settings live in `netlify.toml`. Set `NEXT_PUBLIC_API_URL` to that API URL (no trailing slash) and trigger a new production deploy.
+5. After the Netlify URL exists, confirm Render `CORS_ORIGIN` matches it and restart the API if you changed it.
 
-The API binds `0.0.0.0:$PORT`, holds no state in memory, and runs migrations on boot. Free web instances sleep after 15 minutes idle (cold start ~1 minute). Free Postgres expires after 30 days. Free Key Value does not persist across restarts, so in-progress runs can vanish if Redis recycles.
+The API binds `0.0.0.0:$PORT` and runs migrations on boot. Free web instances sleep after 15 minutes idle (cold start ~1 minute); in-progress runs vanish when the process sleeps. Free Postgres expires after 30 days. To use Redis, set `REDIS_URL` on `system-api` after attaching an existing Key Value instance.
 
 ## Known issues
 

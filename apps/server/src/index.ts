@@ -4,7 +4,7 @@ import { runMigrations } from "./db/migrate.js";
 import { countStaticNodes } from "./db/repositories/staticNodes.js";
 import { seedStaticNodes } from "./db/seed.js";
 import { activeProvider, env, liveProviderChain } from "./env.js";
-import { closeRedis } from "./state/redis.js";
+import { closeRedis, usingMemoryCache } from "./state/redis.js";
 
 const app = await buildApp();
 
@@ -24,6 +24,7 @@ try {
       provider: liveProviderChain().join("+") || "mock",
       primary: activeProvider,
       prefetchFanout: env.PREFETCH_FANOUT,
+      cache: usingMemoryCache ? "memory" : "redis",
     },
     "generation engine ready",
   );

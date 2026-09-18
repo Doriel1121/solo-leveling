@@ -22,7 +22,12 @@ const schema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
 
   DATABASE_URL: z.string().min(1),
-  REDIS_URL: z.string().min(1),
+  // Optional: when unset the engine keeps sessions in process memory. Render
+  // Hobby only allows one free Key Value instance per workspace.
+  REDIS_URL: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || undefined),
 
   LLM_PROVIDER: z.enum(["auto", "gemini", "cohere", "mock"]).default("auto"),
   GEMINI_API_KEY: z
