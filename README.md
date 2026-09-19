@@ -127,7 +127,7 @@ The player site is **Netlify**. The API and Postgres are **Render** on the **Hob
 1. Push this repo to GitHub (`https://github.com/Doriel1121/solo-leveling`).
 2. Apply the blueprint: [Create Render Blueprint](https://dashboard.render.com/blueprint/new?repo=https://github.com/Doriel1121/solo-leveling). Fill `GEMINI_API_KEY` and `COHERE_API_KEY`. Keep every instance on **Free**.
 3. Copy the API URL (`https://system-api-….onrender.com`).
-4. Create the Netlify site from the same repo. Build settings live in `netlify.toml`. Set `NEXT_PUBLIC_API_URL` to that API URL (no trailing slash) and trigger a new production deploy.
+4. In Netlify: **Add new site → Import an existing project → GitHub**, then pick **`Doriel1121/solo-leveling`**. Do **not** use a “Deploy to Netlify” / `start/deploy?repository=` link — that clones a new GitHub repo (`solo-leveling-xxxxx`) instead of building `origin`. Build settings live in `netlify.toml`. Set `NEXT_PUBLIC_API_URL` to the API URL (no trailing slash) and trigger a production deploy.
 5. After the Netlify URL exists, confirm Render `CORS_ORIGIN` matches it and restart the API if you changed it.
 
 The API binds `0.0.0.0:$PORT` and runs migrations on boot. Free web instances sleep after 15 minutes idle (cold start ~1 minute); in-progress runs vanish when the process sleeps. Free Postgres expires after 30 days. To use Redis, set `REDIS_URL` on `system-api` after attaching an existing Key Value instance.

@@ -1,5 +1,5 @@
 import type { FxId, Panel, PanelVisual, ServerEvent } from "@system/shared";
-import { stillScene, truncateCaption } from "@system/shared";
+import { filledCaption, isBlank, stillScene, truncateCaption } from "@system/shared";
 import { markRunType, finishRun } from "../db/repositories/runs.js";
 import { promoteHighestRank } from "../db/repositories/users.js";
 import {
@@ -42,7 +42,7 @@ import { withTimeout } from "./llm/timeout.js";
 import { hashString } from "./rng.js";
 import { prepareTurn } from "./turnCore.js";
 import type { GeneratedChoice } from "./types.js";
-import { captionFallback, visualFor } from "./visuals.js";
+import { captionFallback, ensurePanelCopy, visualFor } from "./visuals.js";
 import { plateLine } from "./plates.js";
 
 /** Steps a diverted run spends inside the anomaly before its clear condition is met. */
@@ -190,6 +190,8 @@ export async function* playTurn(
   const fx: FxId[] = [...resolveFx, ...sceneFx];
 
   const panelId = newPanelId();
+  const fallbackCaption = captionFallback(outcome.kind, outcome.success);
+  let captionSent = false;
 
   // Juice on the still the player just acted in, before the next room exists.
   yield { type: "stats", stats: nextStats, deltas: outcome.deltas, inventory: inventoryNow };
@@ -214,6 +216,7 @@ export async function* playTurn(
     artKey: frame.artKey,
     mood: frame.mood,
     shot: frame.shot,
+    caption: fallbackCaption,
     jobChanged: Boolean(meta.jobChanged),
   };
 
@@ -240,7 +243,6 @@ export async function* playTurn(
     retrievalQuery(promptCtx, choice.label),
   );
   const seed = meta.seed ^ hashString(`${playedStep}:${choice.id}`);
-  const fallbackCaption = captionFallback(outcome.kind, outcome.success);
 
   const cached = await takePrefetch(sessionId, choiceId);
   const cacheUsable =
@@ -269,18 +271,20 @@ export async function* playTurn(
   }
 
   if (cacheUsable && cached) {
-    caption = cached.caption || fallbackCaption;
+    caption = filledCaption(cached.caption, fallbackCaption);
     narration = cached.narration;
+    captionSent = true;
     yield* sendChoices(cached.choices);
-    yield { type: "caption", panelId, caption: truncateCaption(caption) };
+    yield { type: "caption", panelId, caption };
     for (const delta of chunkText(narration)) {
       yield { type: "narration", panelId, delta };
     }
   } else if (route.source === "static" && route.node) {
-    caption = route.node.visual.caption || fallbackCaption;
+    caption = filledCaption(route.node.visual.caption, fallbackCaption);
     narration = route.node.content;
+    captionSent = true;
     yield* sendChoices(withFreshIds(route.node.options));
-    yield { type: "caption", panelId, caption: truncateCaption(caption) };
+    yield { type: "caption", panelId, caption };
     for (const delta of chunkText(narration)) {
       yield { type: "narration", panelId, delta };
     }
@@ -356,7 +360,9 @@ export async function* playTurn(
         continue;
       }
       if (item.value.kind === "caption") {
+        if (isBlank(item.value.value)) continue;
         caption = item.value.value;
+        captionSent = true;
         yield { type: "caption", panelId, caption: truncateCaption(caption) };
       } else {
         narration += item.value.value;
@@ -369,10 +375,28 @@ export async function* playTurn(
     yield* sendChoices(nextChoices);
   }
 
-  narration = narration.trim();
+  // Timeout or a blank model reply can abort before any caption/body lands.
+  // Persist already invented fallbacks; the client must hear them too.
+  const copy = ensurePanelCopy({
+    caption,
+    text: narration,
+    kind: outcome.kind,
+    success: outcome.success,
+  });
+  if (!captionSent || isBlank(caption)) {
+    yield { type: "caption", panelId, caption: copy.caption };
+  }
+  if (isBlank(narration) && copy.text) {
+    for (const delta of chunkText(copy.text)) {
+      yield { type: "narration", panelId, delta };
+    }
+  }
+  caption = copy.caption;
+  narration = copy.text;
+
   const visual: PanelVisual = {
     ...frame,
-    caption: truncateCaption(caption || fallbackCaption),
+    caption,
   };
 
   const locked = outcome.terminal

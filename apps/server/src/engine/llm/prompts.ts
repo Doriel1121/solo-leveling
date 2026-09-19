@@ -23,7 +23,7 @@ All prose is original. Steal world physics and emotional pressure, never plot, n
 
 A panel is a CAPTION and a BODY.
 - CAPTION: at most 140 characters, one or two sentences. This sits on the artwork and carries the panel on its own.
-- BODY: 20-45 words. Never exceed 60 words unless the scene is a temple of rules. It may be empty for a pure aura beat.
+- BODY: 20-45 words. Never exceed 60 words unless the scene is a temple of rules. Always write a BODY. An empty panel is a bug.
 
 Prefer one image-able beat per panel ("mandibles open sideways") over three.
 Prefer calculated risk — a joint, a timer, a clause, a commandment — over brute force.
@@ -286,7 +286,7 @@ export function buildNarrationPrompt(
     "",
     "Reply in exactly this format, with no other text:",
     "CAPTION: <at most 140 characters>",
-    "BODY: <20-45 words>",
+    "BODY: <20-45 words; never leave this empty>",
   ].join("\n");
 }
 

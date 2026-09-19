@@ -120,11 +120,24 @@ export function isTerminalPanel(kind: PanelKind): boolean {
   return kind === "death" || kind === "victory";
 }
 
+export function isBlank(value: string | undefined | null): boolean {
+  return !value || !value.replace(/\s+/g, " ").trim();
+}
+
 export function truncateCaption(value: string): string {
-  const clean = value.replace(/\s+/g, " ").trim();
+  const clean = value.replace(/^\s*(CAPTION|BODY)\s*:\s*/i, "").replace(/\s+/g, " ").trim();
   if (clean.length <= CAPTION_MAX) return clean;
   // Cut on a word boundary rather than mid-word.
   const cut = clean.slice(0, CAPTION_MAX - 1);
   const lastSpace = cut.lastIndexOf(" ");
   return `${(lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/** Never let a panel paint with a blank caption. */
+export function filledCaption(
+  value: string | undefined,
+  fallback: string,
+): string {
+  const clean = truncateCaption(value ?? "");
+  return clean || truncateCaption(fallback);
 }

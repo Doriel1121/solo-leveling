@@ -29,10 +29,12 @@ export type ServerEvent =
       location: string;
       /** A run can be diverted into an anomaly mid-stream; the badge must follow. */
       runType: RunType;
-      /** Everything needed to paint the frame immediately, minus the caption. */
+      /** Everything needed to paint the frame immediately. */
       artKey: string;
       mood: PanelMood;
       shot: PanelShot;
+      /** Provisional caption so the next room never arrives mute. */
+      caption?: string;
       /** After Job Change the chrome shifts to the shadow palette. */
       jobChanged?: boolean;
     }

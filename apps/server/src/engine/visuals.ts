@@ -1,6 +1,7 @@
 import {
   heroStateFor,
   stillScene,
+  truncateCaption,
   withHeroState,
   type HunterRank,
   type PanelKind,
@@ -136,4 +137,28 @@ export function captionFallback(kind: PanelKind, success: boolean): string {
   if (kind === "victory") return "The gate folds inward behind you.";
   if (!success) return "It lands before you finish moving.";
   return "The dark rearranges itself around you.";
+}
+
+/** Used only when the model also failed to produce a caption. */
+export function bodyFallback(kind: PanelKind, success: boolean): string {
+  if (kind === "death") return "Breath leaves. The gate does not care.";
+  if (kind === "victory") return "You walk out. The tear behind you forgets your name.";
+  if (!success) return "The hit lands. You stay standing because falling would be worse.";
+  return "You take the next step before the room can decide you.";
+}
+
+export function ensurePanelCopy(params: {
+  caption?: string;
+  text?: string;
+  kind: PanelKind;
+  success: boolean;
+}): { caption: string; text: string } {
+  const rawCaption = truncateCaption(params.caption ?? "");
+  const caption = rawCaption || captionFallback(params.kind, params.success);
+  const text = (params.text ?? "").replace(/^\s*(CAPTION|BODY)\s*:\s*/i, "").trim();
+  if (text) return { caption, text };
+  // Caption-only is allowed. A mute panel is not: if the caption had to be
+  // invented, put a line under the art as well.
+  if (rawCaption) return { caption, text: "" };
+  return { caption, text: bodyFallback(params.kind, params.success) };
 }

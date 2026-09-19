@@ -28,7 +28,7 @@ const VISUAL_FALLBACK: PanelVisual = {
   artKey: "dungeon.pillar",
   mood: "night",
   shot: "standard",
-  caption: "",
+  caption: "The dark rearranges itself around you.",
 };
 
 function toRecord(row: StaticNodeRow): StaticNodeRecord {

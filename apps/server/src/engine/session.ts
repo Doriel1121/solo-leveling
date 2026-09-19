@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { Panel, SessionSnapshot } from "@system/shared";
-import { INITIAL_STATS, truncateCaption } from "@system/shared";
+import { INITIAL_STATS } from "@system/shared";
 import { createRun } from "../db/repositories/runs.js";
 import { findEligibleNodes } from "../db/repositories/staticNodes.js";
 import { findOrCreateUser, incrementRunCount } from "../db/repositories/users.js";
@@ -26,7 +26,7 @@ import {
 import { lockChoices } from "./locking.js";
 import { schedulePrefetch } from "./prefetch.js";
 import type { GeneratedChoice, SessionMeta } from "./types.js";
-import { visualFor } from "./visuals.js";
+import { ensurePanelCopy, visualFor } from "./visuals.js";
 
 const STARTING_INVENTORY = ["hunter ID card", "notched utility knife"];
 const OPENING_LOCATION = "awakening";
@@ -112,6 +112,12 @@ async function buildOpeningPanel(
   const now = new Date().toISOString();
 
   if (node) {
+    const copy = ensurePanelCopy({
+      caption: node.visual.caption,
+      text: node.content,
+      kind: node.kind,
+      success: true,
+    });
     return {
       panel: {
         id: newPanelId(),
@@ -119,10 +125,10 @@ async function buildOpeningPanel(
         source: "static",
         visual: {
           ...node.visual,
-          caption: truncateCaption(node.visual.caption),
+          caption: copy.caption,
         },
         fx: ["system_open"],
-        text: node.content,
+        text: copy.text || node.content,
         systemLines: node.systemLines,
         createdAt: now,
       },
@@ -162,6 +168,13 @@ async function buildOpeningPanel(
     }),
   ]);
 
+  const copy = ensurePanelCopy({
+    caption: prose.caption,
+    text: prose.text,
+    kind: "system",
+    success: true,
+  });
+
   return {
     panel: {
       id: newPanelId(),
@@ -178,10 +191,10 @@ async function buildOpeningPanel(
           inventory: STARTING_INVENTORY,
           jobChanged: false,
         }),
-        caption: truncateCaption(prose.caption),
+        caption: copy.caption,
       },
       fx: ["system_open"],
-      text: prose.text,
+      text: copy.text,
       systemLines: ["[ You have acquired the qualification to be a Player. ]"],
       createdAt: now,
     },
@@ -216,7 +229,19 @@ export async function loadSession(
     outcome: meta.outcome,
     location: meta.location,
     jobChanged: Boolean(meta.jobChanged),
-    panels,
+    panels: panels.map((panel) => {
+      const copy = ensurePanelCopy({
+        caption: panel.visual.caption,
+        text: panel.text,
+        kind: panel.kind,
+        success: panel.kind !== "death",
+      });
+      return {
+        ...panel,
+        visual: { ...panel.visual, caption: copy.caption },
+        text: copy.text || panel.text,
+      };
+    }),
     choices,
   };
 }

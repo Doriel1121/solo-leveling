@@ -1,3 +1,4 @@
+import { isBlank } from "@system/shared";
 import { fallback, llm } from "./llm/index.js";
 import type { GenerationRequest } from "./llm/provider.js";
 import { newChoiceId } from "./llm/ids.js";
@@ -74,7 +75,7 @@ async function* splitProse(
         .slice(0, marker.index)
         .replace(CAPTION_MARKER, "")
         .trim();
-      yield { kind: "caption", value: head || fallbackCaption };
+      yield { kind: "caption", value: isBlank(head) ? fallbackCaption : head };
       captionSent = true;
 
       const rest = buffer.slice(marker.index + marker[0].length).replace(/^\s+/, "");
@@ -88,7 +89,7 @@ async function* splitProse(
 
     if (buffer.length > SNIFF_LIMIT) {
       const { head, rest } = firstSentence(buffer.replace(CAPTION_MARKER, ""));
-      yield { kind: "caption", value: head || fallbackCaption };
+      yield { kind: "caption", value: isBlank(head) ? fallbackCaption : head };
       captionSent = true;
       buffer = "";
       if (rest) {
@@ -100,7 +101,7 @@ async function* splitProse(
 
   if (!captionSent) {
     const { head, rest } = firstSentence(buffer.replace(CAPTION_MARKER, ""));
-    yield { kind: "caption", value: head || fallbackCaption };
+    yield { kind: "caption", value: isBlank(head) ? fallbackCaption : head };
     if (rest) yield { kind: "body", value: rest };
   }
 }
@@ -122,12 +123,17 @@ export async function* streamPanelProse(
     }
   }
 
+  let captionSent = false;
   for await (const chunk of splitProse(guarded(), fallbackCaption)) {
+    if (chunk.kind === "caption") captionSent = true;
     yield chunk;
   }
 
-  // splitProse always emits a caption, so a silent provider still yields a
-  // usable caption-only panel; nothing further is needed here.
+  // A hung provider can abort before splitProse's trailing caption. The
+  // client must still receive one, or the next room paints mute.
+  if (!captionSent) {
+    yield { kind: "caption", value: fallbackCaption };
+  }
   void produced;
 }
 
@@ -147,7 +153,10 @@ export async function collectPanelProse(
     if (chunk.kind === "caption") caption = chunk.value;
     else text += chunk.value;
   }
-  return { caption: caption || fallbackCaption, text: text.trim() };
+  return {
+    caption: isBlank(caption) ? fallbackCaption : caption,
+    text: text.trim(),
+  };
 }
 
 /** Static node options are stored without ids so each visit gets fresh, unique ones. */

@@ -82,15 +82,28 @@ const created = await fetch(`${API}/api/sessions`, {
 if (!created.ok) throw new Error(`session create failed: ${created.status}`);
 
 const { session } = (await created.json()) as {
-  session: { sessionId: string; choices: Choice[]; panels: { source: string }[] };
+  session: {
+    sessionId: string;
+    choices: Choice[];
+    panels: { source: string; text?: string; visual?: { caption?: string } }[];
+  };
 };
 
+const opening = session.panels[0];
 console.log(`run ${session.sessionId}  strategy=${strategy}`);
-console.log(`  opening panel from ${session.panels[0]?.source}\n`);
+console.log(`  opening panel from ${opening?.source}`);
+console.log(`  opening caption: "${opening?.visual?.caption ?? ""}"`);
+console.log(`  opening body: "${(opening?.text ?? "").slice(0, 96)}"`);
+if (!opening?.visual?.caption?.trim() && !opening?.text?.trim()) {
+  console.log("  MUTE OPENING — no caption and no body");
+}
+
+console.log("");
 
 let choices = session.choices;
 let lockedSeen = 0;
 let prefetchHits = 0;
+let muteCount = 0;
 let turns = 0;
 let hpRatio = 1;
 let level = 1;
@@ -119,6 +132,7 @@ for (let turn = 1; turn <= maxTurns; turn += 1) {
   let firstByteAt = 0;
   let source = "?";
   let kind = "?";
+  let caption = "";
   let narration = "";
   const system: string[] = [];
   let ended: string | null = null;
@@ -130,6 +144,10 @@ for (let turn = 1; turn <= maxTurns; turn += 1) {
       case "panel_start":
         source = event.source;
         kind = event.kind;
+        caption = event.caption ?? "";
+        break;
+      case "caption":
+        caption = event.caption;
         break;
       case "resolve":
       case "system":
@@ -170,7 +188,13 @@ for (let turn = 1; turn <= maxTurns; turn += 1) {
   );
   if (system.length) console.log(`    ${system.join("  ")}`);
   console.log(`    ${statLine}`);
-  console.log(`    "${narration.slice(0, 96)}${narration.length > 96 ? "…" : ""}"`);
+  const mute = !caption.trim() && !narration.trim();
+  console.log(`    caption: "${caption.slice(0, 80)}${caption.length > 80 ? "…" : ""}"`);
+  console.log(`    body: "${narration.slice(0, 96)}${narration.length > 96 ? "…" : ""}"`);
+  if (mute) {
+    console.log("    MUTE PANEL — no caption and no body");
+    muteCount += 1;
+  }
 
   if (ended) {
     console.log(`\n  ${ended}`);
@@ -179,5 +203,5 @@ for (let turn = 1; turn <= maxTurns; turn += 1) {
 }
 
 console.log(
-  `\nturns=${turns}  prefetchHits=${prefetchHits}/${turns}  lockedOptionsShown=${lockedSeen}`,
+  `\nturns=${turns}  prefetchHits=${prefetchHits}/${turns}  lockedOptionsShown=${lockedSeen}  mutePanels=${muteCount}`,
 );

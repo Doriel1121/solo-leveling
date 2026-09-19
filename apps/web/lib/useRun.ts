@@ -12,6 +12,7 @@ import type {
   SessionSnapshot,
   StatDelta,
 } from "@system/shared";
+import { isBlank } from "@system/shared";
 import { createSession, fetchSession } from "./api";
 import { artSrc, predictFx } from "./fx";
 import { streamTurn } from "./sse";
@@ -208,7 +209,7 @@ function startPanel(event: Extract<ServerEvent, { type: "panel_start" }>): Panel
         artKey: event.artKey,
         mood: event.mood,
         shot: event.shot,
-        caption: "",
+        caption: event.caption ?? "",
       },
       fx: [],
       text: "",
@@ -426,6 +427,7 @@ function applyBufferedEvent(state: RunState, event: ServerEvent): RunState {
       };
 
     case "caption":
+      if (isBlank(event.caption)) return state;
       return {
         ...state,
         pending: patchPendingPanel(pending, (item) => ({
@@ -562,6 +564,7 @@ function applyLiveEvent(state: RunState, event: ServerEvent): RunState {
       };
 
     case "caption":
+      if (isBlank(event.caption)) return state;
       return {
         ...state,
         feed: patchLastPanel(state.feed, (item) => ({

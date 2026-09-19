@@ -13,7 +13,7 @@ import {
 import { hashString } from "./rng.js";
 import { prepareTurn } from "./turnCore.js";
 import type { GeneratedChoice, SessionMeta } from "./types.js";
-import { captionFallback, visualFor } from "./visuals.js";
+import { captionFallback, ensurePanelCopy, visualFor } from "./visuals.js";
 import { plateLine } from "./plates.js";
 
 export interface PrefetchParams {
@@ -164,10 +164,16 @@ async function prefetchBranch(
   ]);
 
   if (signal.aborted) return;
+  const filled = ensurePanelCopy({
+    caption: prose.caption,
+    text: prose.text,
+    kind: prepared.outcome.kind,
+    success: prepared.outcome.success,
+  });
   await savePrefetch(meta.sessionId, {
     choiceId: choice.id,
-    caption: prose.caption,
-    narration: prose.text,
+    caption: filled.caption,
+    narration: filled.text,
     choices: nextChoices,
     assumedStep: meta.step,
     assumedRedGate: prepared.isRedGate,
