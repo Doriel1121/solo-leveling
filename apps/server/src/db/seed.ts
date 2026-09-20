@@ -25,13 +25,13 @@ const nodes: StaticNodeRecord[] = [
       "[ Class: None — Title: None ]",
     ],
     content:
-      "You have counted the dead fluorescent panels twice. Then a window opens beneath them, in the air, patient as a locked door. The examiner does not look up.",
+      "You sat for this measure last year. Toner, dead fluorescents, a clipboard that will not change. Two districts over, a ward bed is still billed to your name. Then cold blue light hangs in the air, and the examiner does not look up.",
     visual: {
       artKey: "awakening.office",
       mood: "fluorescent",
       shot: "cramped",
       caption:
-        "A pane of cold blue light opens under the ceiling grid. Nobody else in the room looks up.",
+        "The Association already wrote E-rank. Then a window opens that nobody else can see.",
     },
     options: [
       {
@@ -39,7 +39,7 @@ const nodes: StaticNodeRecord[] = [
         label: "Touch the window",
         detail: "Accept whatever is being offered",
         requires: {},
-        risk: "moderate",
+        risk: "safe",
       },
       {
         id: "awk_ignore",
@@ -58,6 +58,56 @@ const nodes: StaticNodeRecord[] = [
     ],
     requiredStats: {},
     weight: 10,
+  },
+  {
+    id: "awakening_02",
+    kind: "narration",
+    location: "awakening",
+    minLevel: 1,
+    maxLevel: 3,
+    rankGate: null,
+    systemLines: ["[ The window remains. Visibility: you. ]"],
+    content:
+      "The stamp is still wet. Night air after fluorescent. A bus-stop poster peels: D-rank gathering, hazard pay, no healer. Your phone shows one missed call from the ward. The blue pane keeps pace at your shoulder.",
+    visual: {
+      artKey: "awakening.office",
+      mood: "fluorescent",
+      shot: "cramped",
+      caption:
+        "They stamp the same letter. You walk out. The window follows.",
+    },
+    options: [
+      {
+        id: "awk_hospital",
+        label: "Walk to the hospital first",
+        detail: "The bill does not wait",
+        requires: {},
+        risk: "safe",
+      },
+      {
+        id: "awk_notice",
+        label: "Read the gathering-site notice",
+        detail: "Look at work. Do not take it yet",
+        requires: {},
+        risk: "safe",
+      },
+      {
+        id: "awk_home",
+        label: "Go home and pull the blinds",
+        detail: "Hide the pane from the street",
+        requires: {},
+        risk: "safe",
+      },
+      {
+        id: "awk_ask_window",
+        label: "Ask the window what it wants",
+        detail: "It has never answered a question",
+        requires: {},
+        risk: "moderate",
+      },
+    ],
+    requiredStats: {},
+    weight: 8,
   },
   {
     id: "gate_briefing_01",

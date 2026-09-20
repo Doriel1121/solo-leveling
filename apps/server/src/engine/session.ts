@@ -101,13 +101,15 @@ async function buildOpeningPanel(
   meta: SessionMeta,
   stats: typeof INITIAL_STATS,
 ): Promise<OpeningPanel> {
-  const [node] = await findEligibleNodes({
+  const candidates = await findEligibleNodes({
     location: OPENING_LOCATION,
     level: stats.level,
     rank: stats.rank,
     excludeIds: [],
-    limit: 1,
+    limit: 8,
   });
+  const node =
+    candidates.find((item) => item.id === "awakening_01") ?? candidates[0];
 
   const now = new Date().toISOString();
 
@@ -149,7 +151,7 @@ async function buildOpeningPanel(
   const systemPrompt = buildSystemPrompt(promptCtx, "awakening system window player hospital daily");
   const situation = [
     describeSituation(promptCtx),
-    "The player is an unranked E-rank hunter at a routine assessment when a System window opens that only they can see.",
+    "The player is the weakest licensed E-rank hunter, sitting a routine Association measure they already failed last year. A sister's ward bed is billed to them. Then a System window opens that only they can see. This is the first page of the run — not a raid, not a party, not a job already accepted.",
   ].join("\n");
 
   const [prose, choices] = await Promise.all([

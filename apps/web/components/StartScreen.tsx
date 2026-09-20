@@ -84,7 +84,7 @@ export function StartScreen({
               {starting ? "opening" : "accept"}
             </span>
             <span className="mt-0.5 block font-system text-[9.5px] uppercase tracking-[0.28em] text-white/35">
-              enter the gate
+              the window is waiting
             </span>
           </button>
 

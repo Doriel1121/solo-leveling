@@ -91,6 +91,12 @@ function phaseLine(ctx: PromptContext): string {
  */
 function sceneJob(ctx: PromptContext): string {
   const hay = `${ctx.location} ${ctx.artKey ?? ""} ${ctx.plate ?? ""}`.toLowerCase();
+  if (/awakening|office|fluorescent|assessment|examiner/.test(hay)) {
+    return "SCENE JOB: origin. Weakest licensed hunter, routine Association measure, family debt. This is an office and a street, not a raid. No party, no briefing, no gate already accepted.";
+  }
+  if (/d_rank_gate|carpark|gathering/.test(hay) && ctx.history.length < 6) {
+    return "SCENE JOB: first posted job. Arriving at a gathering site, not already mid-clear. Hazard pay, a short party, a leader doing arithmetic.";
+  }
   if (/hospital|stairwell|ward|sister|push-?up|daily/.test(hay)) {
     return "SCENE JOB: family / daily quest. Humiliating training vs hide it from family vs eat the Penalty Zone. Not a dungeon slash.";
   }
@@ -164,6 +170,11 @@ function lockedFantasy(ctx: PromptContext): string {
 
 function registerLines(ctx: PromptContext): string[] {
   const lines = [phaseLine(ctx), sceneJob(ctx)];
+  if (ctx.history.length < 3) {
+    lines.push(
+      "PROLOGUE: the story is just starting. Do not write a raid already in progress, a party waiting, or an assignment already accepted. Ordinary life, the window, then a reason to keep walking.",
+    );
+  }
   if (ctx.location === "hospital" || (ctx.artKey ?? "").startsWith("hospital.")) {
     lines.push("This is a family beat. One uncool sentence is allowed.");
   }

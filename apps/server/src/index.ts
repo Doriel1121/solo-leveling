@@ -12,11 +12,10 @@ try {
   const applied = await runMigrations();
   if (applied.length) app.log.info({ applied }, "migrations applied");
 
-  // First boot on an empty database should still be playable.
-  if ((await countStaticNodes()) === 0) {
-    const seeded = await seedStaticNodes();
-    app.log.info({ seeded }, "seeded static nodes");
-  }
+  // Authored nodes are the source of truth. Upsert every boot so opening
+  // copy and new prologue beats reach an already-seeded database.
+  const seeded = await seedStaticNodes();
+  app.log.info({ seeded, existing: await countStaticNodes() }, "seeded static nodes");
 
   await app.listen({ host: env.HOST, port: env.PORT });
   app.log.info(

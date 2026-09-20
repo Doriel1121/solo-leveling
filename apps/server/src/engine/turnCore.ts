@@ -34,6 +34,7 @@ export async function prepareTurn(params: {
     seed: params.meta.seed,
     step: params.meta.step,
     isRedGate,
+    location: params.meta.location,
   });
 
   const route = await decideRoute({

@@ -19,10 +19,9 @@ export interface RouteDecision {
  */
 const PROGRESSION = [
   "awakening",
-  "d_rank_gate",
-  // Level 2 is the non-combat rung: the daily quest, the hospital, the family
-  // reason to keep running. Skipping the training here is what the next rung is.
   "hospital",
+  "d_rank_gate",
+  // After the first job, the daily / penalty loop is the reason to keep running.
   "penalty_zone",
   "instant_dungeon",
   "surface",
@@ -37,12 +36,13 @@ function nextLocation(
   redGate: boolean,
 ): string {
   if (redGate) return "red_gate";
-  // The opening panel is already awakening. The first tap may still resolve
-  // there; after that the run has to leave the assessment room.
+  // Opening is already the assessment. Stay there for the walk-out, then the
+  // hospital, then a job — never drop the player into a raid on tap one.
   if (meta.step < 1) return "awakening";
+  if (meta.step < 2) return "hospital";
   const byStep = Math.floor(meta.step / 2);
   const byLevel = Math.max(0, stats.level - 1);
-  const index = Math.min(PROGRESSION.length - 1, Math.max(byStep, byLevel, 1));
+  const index = Math.min(PROGRESSION.length - 1, Math.max(byStep, byLevel, 2));
   return PROGRESSION[index]!;
 }
 
@@ -84,7 +84,10 @@ export async function decideRoute(params: {
   }
 
   const rng = mulberry32(meta.seed ^ hashString(`route:${meta.step}`));
-  if (rng() > env.STATIC_NODE_RATIO) {
+  // The first three taps are the origin story. Do not let the model invent a
+  // raid that is already in progress.
+  const prologue = meta.step < 3;
+  if (!prologue && rng() > env.STATIC_NODE_RATIO) {
     return {
       source: "ai",
       node: null,

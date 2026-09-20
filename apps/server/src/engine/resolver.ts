@@ -143,6 +143,13 @@ export function applyDeltas(
  * it up, and the result is compared against the risk band's difficulty. Nothing
  * here consults the model, which is why prefetched turns stay consistent.
  */
+const SOCIAL_LOCATIONS = new Set([
+  "awakening",
+  "hospital",
+  "surface",
+  "shop",
+]);
+
 export function resolveTurn(params: {
   stats: PlayerStats;
   choice: GeneratedChoice;
@@ -150,8 +157,10 @@ export function resolveTurn(params: {
   seed: number;
   step: number;
   isRedGate: boolean;
+  location?: string;
 }): ResolvedTurn {
   const { stats, choice, seed, step, isRedGate } = params;
+  const social = SOCIAL_LOCATIONS.has(params.location ?? "");
   const risk = choice.risk;
 
   const rng = mulberry32(seed ^ hashString(`${step}:${choice.id}`));
@@ -200,13 +209,16 @@ export function resolveTurn(params: {
     systemLines.push(`[ EXP +${xp} ]`);
     summary = `The player succeeded at a ${risk} action and gained ${xp} experience.`;
 
-    if (risk === "safe") {
+    if (risk === "safe" && !social) {
       deltas.push({
         stat: "hp",
         value: Math.ceil(stats.maxHp * SAFE_RECOVERY_HP_RATIO),
       });
       deltas.push({ stat: "fatigue", value: SAFE_RECOVERY_FATIGUE });
     }
+  } else if (social) {
+    deltas.push({ stat: "fatigue", value: 3 });
+    summary = `The player failed a ${risk} action. Nothing struck them. The moment just went wrong.`;
   } else {
     const shortfall = difficulty - roll;
     const damage = FAILURE_DAMAGE[risk] + Math.floor(shortfall / 3);
@@ -236,6 +248,7 @@ export function resolveTurn(params: {
   const rankChanged = nextStats.rank !== stats.rank;
 
   let kind: PanelKind = risk === "safe" ? "narration" : "combat";
+  if (social) kind = params.location === "awakening" ? "system" : "narration";
   if (isRedGate) kind = "red_gate";
 
   let terminal: TurnOutcome["terminal"] = null;
@@ -266,6 +279,7 @@ export function resolveTurn(params: {
         rankChanged,
         spentMp: Boolean(choice.requires.mp),
         acquired: granted.length > 0 || Boolean(reward),
+        social,
       }),
       terminal,
       roll,
@@ -292,6 +306,7 @@ function stampFx(params: {
   rankChanged: boolean;
   spentMp: boolean;
   acquired: boolean;
+  social?: boolean;
 }): FxId[] {
   if (params.terminal === "death") return ["death"];
   if (params.terminal === "victory") return ["victory"];
@@ -299,7 +314,10 @@ function stampFx(params: {
   const fx: FxId[] = [];
   if (params.spentMp) fx.push("mp_spend");
 
-  if (params.success) {
+  if (params.social) {
+    fx.push(params.success ? "system_open" : "lock_deny");
+    if (params.success) fx.push("xp_tick");
+  } else if (params.success) {
     if (params.risk === "safe") fx.push("safe_recover");
     else if (params.risk === "deadly") fx.push("strike_heavy");
     else fx.push("strike");
