@@ -39,6 +39,17 @@ export async function fetchSession(
   return payload.session;
 }
 
+export async function abandonSession(sessionId: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/api/sessions/${sessionId}/abandon`, {
+      method: "POST",
+      keepalive: true,
+    });
+  } catch {
+    // Sweep will mark the run if this never arrives.
+  }
+}
+
 export async function fetchEpilogueBlob(runId: string): Promise<string | null> {
   try {
     const response = await fetch(`${API_BASE}/api/runs/${runId}/epilogue`);

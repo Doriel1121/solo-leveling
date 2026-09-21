@@ -1,7 +1,11 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { Panel, SessionSnapshot } from "@system/shared";
 import { INITIAL_STATS } from "@system/shared";
-import { createRun } from "../db/repositories/runs.js";
+import {
+  abandonRun,
+  abandonStaleRuns,
+  createRun,
+} from "../db/repositories/runs.js";
 import { findEligibleNodes } from "../db/repositories/staticNodes.js";
 import { findOrCreateUser, incrementRunCount } from "../db/repositories/users.js";
 import {
@@ -14,6 +18,7 @@ import {
   markNodeSeen,
   pushPanel,
   saveChoices,
+  saveMeta,
 } from "../state/sessionStore.js";
 import { collectPanelProse, generateChoices, withFreshIds } from "./generation.js";
 import { newPanelId } from "./llm/ids.js";
@@ -42,7 +47,8 @@ export async function startSession(
 ): Promise<SessionSnapshot> {
   const handle = username?.trim() || `hunter_${randomUUID().slice(0, 6)}`;
   const user = await findOrCreateUser(handle);
-  const run = await createRun(user.id, "canon");
+  void abandonStaleRuns().catch(() => undefined);
+  const run = await createRun(user.id, "canon", OPENING_LOCATION);
   await incrementRunCount(user.id);
 
   const meta: SessionMeta = {
@@ -203,6 +209,20 @@ async function buildOpeningPanel(
     choices,
     nodeId: null,
   };
+}
+
+/** Marks a live run abandoned. Closing the tab without this waits for the stale sweep. */
+export async function abandonSession(
+  sessionId: string,
+): Promise<{ abandoned: boolean } | null> {
+  const meta = await getMeta(sessionId);
+  if (!meta) return null;
+  if (meta.outcome !== "active") return { abandoned: false };
+
+  meta.outcome = "abandoned";
+  await saveMeta(meta);
+  const marked = await abandonRun(meta.runId);
+  return { abandoned: marked };
 }
 
 /** Rehydrates a run from Redis so a page refresh does not lose the feed. */

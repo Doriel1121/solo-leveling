@@ -1,6 +1,6 @@
 import type { FxId, Panel, PanelVisual, ServerEvent } from "@system/shared";
 import { filledCaption, isBlank, stillScene, truncateCaption } from "@system/shared";
-import { markRunType, finishRun } from "../db/repositories/runs.js";
+import { markRunType, finishRun, progressRun } from "../db/repositories/runs.js";
 import { promoteHighestRank } from "../db/repositories/users.js";
 import {
   addItems,
@@ -122,6 +122,13 @@ export async function* playTurn(
   const playedStep = meta.step;
   const prepared = await prepareTurn({ meta, stats, inventory, choice });
   const { outcome, nextStats, route } = prepared;
+
+  // Record the tap before narration so a timeout still shows where they stopped.
+  await progressRun({
+    runId: meta.runId,
+    steps: playedStep + 1,
+    location: route.location,
+  });
 
   const resolveLines = [...outcome.systemLines];
   if (divertNow) {
@@ -440,6 +447,7 @@ export async function* playTurn(
       outcome: outcome.terminal,
       deathReason: outcome.terminal === "death" ? outcome.summary : null,
       steps: meta.step,
+      location: meta.location,
       finalLevel: nextStats.level,
       finalRank: nextStats.rank,
       canonDivergence: Number(nextStats.canonDivergence.toFixed(2)),
@@ -463,6 +471,11 @@ export async function* playTurn(
     };
   } else {
     await saveMeta(meta);
+    await progressRun({
+      runId: meta.runId,
+      steps: meta.step,
+      location: meta.location,
+    });
     await touchSession(sessionId);
     schedulePrefetch({
       meta,

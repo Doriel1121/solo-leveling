@@ -13,7 +13,7 @@ import type {
   StatDelta,
 } from "@system/shared";
 import { isBlank } from "@system/shared";
-import { createSession, fetchSession } from "./api";
+import { abandonSession, createSession, fetchSession } from "./api";
 import { artSrc, predictFx } from "./fx";
 import { streamTurn } from "./sse";
 
@@ -819,9 +819,14 @@ export function useRun() {
 
   const abandon = useCallback(() => {
     abortRef.current?.abort();
+    const sessionId = state.session?.sessionId;
+    // Death / victory already finished the row. Restart must not overwrite them.
+    if (sessionId && !state.ending) {
+      void abandonSession(sessionId);
+    }
     window.localStorage.removeItem(STORAGE_KEY);
     dispatch({ type: "reset" });
-  }, []);
+  }, [state.session?.sessionId, state.ending]);
 
   return {
     ...state,

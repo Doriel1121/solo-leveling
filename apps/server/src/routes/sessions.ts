@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import type { FastifyPluginAsync } from "fastify";
 import { encodeSSE } from "@system/shared";
 import { z } from "zod";
-import { loadSession, startSession } from "../engine/session.js";
+import { abandonSession, loadSession, startSession } from "../engine/session.js";
 import { playTurn } from "../engine/turn.js";
 import { getEpilogue } from "../state/sessionStore.js";
 
@@ -77,6 +77,18 @@ export const sessionRoutes: FastifyPluginAsync = async (app) => {
       // Disables response buffering on proxies that would otherwise batch the stream.
       .header("X-Accel-Buffering", "no")
       .send(Readable.from(frames()));
+  });
+
+  app.post("/sessions/:id/abandon", async (request, reply) => {
+    const params = sessionParams.safeParse(request.params);
+    if (!params.success) {
+      return reply.code(400).send({ error: "Invalid session id." });
+    }
+    const result = await abandonSession(params.data.id);
+    if (!result) {
+      return reply.code(404).send({ error: "Session not found or expired." });
+    }
+    return reply.send(result);
   });
 
   app.get("/runs/:runId/epilogue", async (request, reply) => {

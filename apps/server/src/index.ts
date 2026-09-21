@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { closePool } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
+import { abandonStaleRuns } from "./db/repositories/runs.js";
 import { countStaticNodes } from "./db/repositories/staticNodes.js";
 import { seedStaticNodes } from "./db/seed.js";
 import { activeProvider, env, liveProviderChain } from "./env.js";
@@ -16,6 +17,9 @@ try {
   // copy and new prologue beats reach an already-seeded database.
   const seeded = await seedStaticNodes();
   app.log.info({ seeded, existing: await countStaticNodes() }, "seeded static nodes");
+
+  const stale = await abandonStaleRuns();
+  if (stale) app.log.info({ stale }, "closed stale active runs");
 
   await app.listen({ host: env.HOST, port: env.PORT });
   app.log.info(

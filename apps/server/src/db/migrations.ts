@@ -67,4 +67,24 @@ export const migrations: Migration[] = [
         ADD COLUMN IF NOT EXISTS visual jsonb NOT NULL DEFAULT '{}'::jsonb;
     `,
   },
+  {
+    id: "003_run_progress",
+    sql: /* sql */ `
+      -- Mid-run progress so a quit is not stored as "still playing, 0 steps".
+      ALTER TABLE runs
+        ADD COLUMN IF NOT EXISTS last_location text NOT NULL DEFAULT 'awakening';
+      ALTER TABLE runs
+        ADD COLUMN IF NOT EXISTS last_step_at timestamptz;
+      UPDATE runs
+         SET last_step_at = COALESCE(end_time, start_time)
+       WHERE last_step_at IS NULL;
+      ALTER TABLE runs
+        ALTER COLUMN last_step_at SET DEFAULT now();
+      ALTER TABLE runs
+        ALTER COLUMN last_step_at SET NOT NULL;
+      CREATE INDEX IF NOT EXISTS runs_stale_active_idx
+        ON runs (last_step_at)
+        WHERE outcome = 'active';
+    `,
+  },
 ];
